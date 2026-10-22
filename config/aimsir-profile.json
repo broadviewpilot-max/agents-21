@@ -51,5 +51,31 @@
     "Never state participant counts, outcomes, or financial totals that are not listed in this file.",
     "Never include participant-level detail; keep minors' information generic.",
     "Mark every number as 'planning target' or leave it as [INSERT VERIFIED DATA]."
-  ]
+  ],
+  "locations": {
+    "note": "Lauderhill, Pompano Beach and North Lauderdale are all in Broward County, FL.",
+    "items": [
+      {
+        "place": "Lauderhill, FL",
+        "basis": "City on IRS/ProPublica exempt-organization record"
+      },
+      {
+        "place": "Pompano Beach, FL",
+        "basis": "Venue of Aimsir's fundraising events (public posts)"
+      },
+      {
+        "place": "North Lauderdale, FL",
+        "basis": "School visit at North Lauderdale Elementary (public post)"
+      },
+      {
+        "place": "Baton Rouge, LA",
+        "basis": "First Flight Forward partners (public post)"
+      },
+      {
+        "place": "Dayton, OH",
+        "basis": "October 3 outreach event at the National Museum of the USAF (public post)"
+      }
+    ]
+  },
+  "organizationStatus": "Newly IRS-recognized 501(c)(3); no Form 990 filings yet (confirmed by Sean 2026-10-22). Candid/GuideStar seal status: unknown. SAM.gov/UEI registration: unknown."
 }

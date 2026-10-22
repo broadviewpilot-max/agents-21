@@ -56,7 +56,7 @@ export default function BriefView({ briefId }: { briefId: string }) {
 
         <div className={`panel ${recCls}`}>
           <div className="row"><div className="score">{fit?.total ?? '—'}</div><div className="grow"><h4>Recommendation: {rec ?? 'Not scored'}</h4>
-            <input className="noprint" type="text" value={brief.headline} disabled={locked} onChange={(e) => setData({ ...data, brief: { ...brief, headline: e.target.value } })} onBlur={(e) => save({ headline: e.target.value })} />
+            <textarea className="noprint" rows={2} style={{ minHeight: 0 }} value={brief.headline} disabled={locked} onChange={(e) => setData({ ...data, brief: { ...brief, headline: e.target.value } })} onBlur={(e) => save({ headline: e.target.value })} />
             <div className="printonly" style={{ fontWeight: 600 }}>{brief.headline}</div></div></div>
           {fit?.flags.length ? <ul>{fit.flags.map((f) => <li key={f}>{f}</li>)}</ul> : null}
         </div>

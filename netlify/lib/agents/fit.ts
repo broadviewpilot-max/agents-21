@@ -1,6 +1,7 @@
 import type { AwardsResult, DeadlinesResult, FitScore, IntelligenceResult, Program, ScoringConfig } from '../../../shared/types.ts';
 import { askJson } from '../claude.ts';
 import { computeFit } from '../guards.ts';
+import profile from '../../../config/aimsir-profile.json';
 import { Ctx, GUARD } from './context.ts';
 
 /** Agent 4: Fit Scoring Analyst. The model scores each criterion 0-10; code computes the total. */
@@ -17,8 +18,11 @@ export async function runFit(
     ctx.meter,
     `You are a strategy analyst scoring how well a funder fits The Aimsir Foundation, an aviation and STEM access nonprofit. ${GUARD}
 Score each criterion 0-10 using only the funder findings and Aimsir program list provided. If evidence is missing for a criterion, score it low (<=3) and say why.
-"hardStops" are disqualifiers stated in the findings (e.g. invitation-only, wrong entity type, excluded geography, org-age minimum Aimsir cannot meet). Do not invent them.`,
-    `AIMSIR PROGRAMS (draft list):
+"hardStops" are disqualifiers stated in the findings (e.g. invitation-only, wrong entity type, excluded geography, org-age minimum Aimsir cannot meet). Do not invent them. A requirement Aimsir may not meet (e.g. a transparency seal, minimum years or filings, SAM.gov) is a FLAG, not a hard stop, unless the funder says it is a strict prerequisite and the PROFILE confirms Aimsir lacks it.`,
+    `AIMSIR PROFILE (confirmed by Sean; use for geography, entity type and eligibility):
+${JSON.stringify({ legalName: profile.legalName, taxStatus: profile.taxStatus, organizationStatus: profile.organizationStatus, mission: profile.missionStatement, locations: profile.locations, geography: profile.geography }, null, 1)}
+
+AIMSIR PROGRAMS:
 ${programs.map((p) => `- [${p.id}] ${p.name}: ${p.summary} (geography: ${p.geography})`).join('\n')}
 
 CRITERIA:

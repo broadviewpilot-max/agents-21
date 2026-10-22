@@ -38,6 +38,7 @@ export async function runDeadlines(ctx: Ctx, intelligenceUrls: string[]): Promis
     meter,
     `You are a grant-calendar analyst. Today is ${ctx.today}. ${GUARD}
 Only list a date if the evidence states it. Dates must be ISO YYYY-MM-DD. If a program is rolling or by invitation, add a deadline with kind "rolling" and NO date.
+Only list programs plausibly relevant to Aimsir (aviation, STEM, youth education, mentorship, scholarships for students from underserved communities). Mention excluded unrelated programs in "note" instead of listing them.
 Do not infer a recurring annual date from a past year unless you mark it "inferred".`,
     `Funder: ${funder.name}
 Return JSON: {"deadlines":[{"label":string,"date":"YYYY-MM-DD"|null,"kind":"application"|"loi"|"rolling"|"event"|"other","status":"confirmed"|"inferred"|"unknown","sourceUrl":string|null}],"note":"one sentence on how reliable this is"}
