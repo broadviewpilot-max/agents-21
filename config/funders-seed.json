@@ -1,0 +1,10 @@
+{
+  "_note": "Starting test set chosen by the build agent to span funder types. These are candidates to evaluate, NOT verified good fits or confirmed open programs. URLs are left blank on purpose: the Intelligence agent finds and cites the official pages.",
+  "funders": [
+    { "name": "FAA Aviation Workforce Development Grants", "type": "federal", "why": "Federal program family; exercises the Grants.gov path and the SAM.gov/eligibility flags." },
+    { "name": "The Boeing Company (Global Engagement / charitable giving)", "type": "corporate", "why": "Large aerospace corporate giving; tests corporate guidelines and social signals." },
+    { "name": "GE Aerospace Foundation", "type": "private-foundation", "why": "Aerospace corporate foundation; tests 990 and past-awards path." },
+    { "name": "AOPA Foundation", "type": "public-charity", "why": "Aviation-community funder/program operator; tests aviation-specific alignment." },
+    { "name": "Community Foundation of Broward", "type": "community-foundation", "why": "Local to Aimsir's Florida base; tests geography fit and local deadlines." }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "_note": "Every fact below was taken from Aimsir's own public channels or public registries on 2026-10-21. 'selfReported' = Aimsir's own claim, not independently verified. Sean must review before any external use.",
+  "legalName": "The Aimsir Foundation Inc.",
+  "tagline": "Inspiring the skies, changing lives.",
+  "taxStatus": "501(c)(3) (stated on Aimsir's website and Instagram)",
+  "ein": {
+    "value": "33-2801792",
+    "source": "https://projects.propublica.org/nonprofits/api/v2/search.json?q=aimsir+foundation",
+    "note": "IRS Business Master File listing via ProPublica: 'Aimsir Foundation', Lauderhill FL, NTEE B82 (scholarships), 501(c)(3). No 990 filings were listed at lookup. OPEN ITEM: Sean to confirm this is the correct legal entity and 990 filing status."
+  },
+  "missionStatement": "The Aimsir Foundation empowers marginalized and underserved communities in both developing countries and the United States by fostering growth and development in aviation and related STEM fields.",
+  "missionSource": "https://theaimsirfoundation.org/",
+  "audience": "Underserved and underrepresented students (middle school through early-career training).",
+  "geography": ["Florida (Broward County area outreach)", "Baton Rouge, Louisiana (First Flight Forward)", "Bahamas (scholarship preference)", "Developing countries (stated in mission)"],
+  "founder": "Sean Smith, Founder & Executive Director; airline captain and check airman",
+  "selfReported": [
+    {
+      "claim": "More than $30,000 invested in aviation scholarships over five years",
+      "source": "Aimsir sponsorship post, Instagram (reel DVHzYZ7jvjW)",
+      "status": "selfReported"
+    },
+    {
+      "claim": "First Annual Aimsir Foundation Fundraising Gala held; $10,000 aviation scholarship presented",
+      "source": "Aimsir Instagram (reel DV4SND2DznL)",
+      "status": "selfReported"
+    },
+    {
+      "claim": "Gala sponsorship tiers $2,500 to $7,500; each tier described as fully funding one aviation scholar",
+      "source": "Aimsir Instagram (reel DVHzYZ7jvjW)",
+      "status": "selfReported"
+    }
+  ],
+  "partners": [
+    { "name": "Helix Aviation Academy", "role": "First Flight Forward partner; student outreach host (Baton Rouge, LA)", "source": "https://www.instagram.com/reel/DYAFPGLuNqs/" },
+    { "name": "Gulf Coast Aviation", "role": "First Flight Forward partner (Baton Rouge, LA)", "source": "https://www.instagram.com/reel/DYAFPGLuNqs/" }
+  ],
+  "rules": [
+    "Never state participant counts, outcomes, or financial totals that are not listed in this file.",
+    "Never include participant-level detail; keep minors' information generic.",
+    "Mark every number as 'planning target' or leave it as [INSERT VERIFIED DATA]."
+  ]
+}

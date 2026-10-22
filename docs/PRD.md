@@ -122,3 +122,17 @@ Briefs cannot be marked Approved while any "Verify" item is unresolved unless Se
 4. Netlify site: connect this repo (`broadviewpilot-max/agents-21`, `main`) — or authorize me to do it via the Netlify connector.
 5. iCal export in v1? Single-user password gate acceptable?
 6. Confirm you want this written to `main` directly (this session is on branch `ccr-178c79af-4z7dvi`; I will not push to `main` or open a PR without your say-so).
+
+---
+
+## 13. Revision log
+
+**v1.1 — 2026-10-22 (after Sean's answers)**
+- Anthropic key: Sean creates it at platform.claude.com/settings/keys (API billing is separate from a Claude subscription). **[Open: Sean to create and add to Netlify]**
+- Firecrawl: used during build via the connected MCP. In production it is **optional**: without `FIRECRAWL_API_KEY` the app reads pages with plain fetch. **[Decision]**
+- Aimsir program list: researched and seeded in `config/aimsir-programs.json` (5 draft programs from Aimsir's own site/Instagram, with sources); editable and confirmable on the Programs page. Aimsir profile seeded in `config/aimsir-profile.json`; self-reported claims are labeled. **[Open: Sean confirms]**
+- Starter test funders: FAA Aviation Workforce Development Grants, Boeing, GE Aerospace Foundation, AOPA Foundation, Community Foundation of Broward — candidates to evaluate, not verified fits.
+- Password: app-level single-user gate (`APP_PASSWORD`), because Netlify site-wide password protection is a paid-plan feature. **[Decision]**
+- Calendar: v1 provides a **downloadable .ics file** (opens in Google/Apple/Outlook Calendar). A live subscription feed is deferred.
+- Deploy: Sean connects the repo to Netlify; code is pushed directly to `main` per Sean's instruction. No PR.
+- Found during research: IRS/ProPublica lists "Aimsir Foundation" (EIN 33-2801792, Lauderhill FL, NTEE B82) with no 990 filings shown. Funders check this; confirm entity and filing status. **[Open]**

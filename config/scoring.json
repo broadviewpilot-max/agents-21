@@ -1,0 +1,13 @@
+{
+  "_note": "PLANNING ASSUMPTION weights (sum 100). Editable. Each criterion is scored 0-10 by the Fit agent from evidence; the total is computed in code.",
+  "criteria": [
+    { "id": "mission", "label": "Mission alignment", "weight": 30, "guide": "Funder priorities vs. aviation access, STEM, mentorship, underserved youth." },
+    { "id": "program", "label": "Program match", "weight": 25, "guide": "Does a specific Aimsir program fit a stated funding area or past grant?" },
+    { "id": "eligibility", "label": "Geography & eligibility", "weight": 15, "guide": "Entity type, geography, invitation-only rules, org age/budget minimums." },
+    { "id": "size", "label": "Award size vs. need", "weight": 10, "guide": "Typical award range relative to a realistic Aimsir ask." },
+    { "id": "history", "label": "Funding history with comparable orgs", "weight": 10, "guide": "Evidence the funder has funded small aviation/STEM/youth nonprofits." },
+    { "id": "timing", "label": "Timing & effort", "weight": 10, "guide": "Open window, lead time, application burden." }
+  ],
+  "thresholds": { "pursue": 70, "cultivate": 45 },
+  "hardStopCap": 40
+}
