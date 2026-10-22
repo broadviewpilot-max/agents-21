@@ -141,3 +141,13 @@ describe('funder detail validation', () => {
     expect(normalizeUrl('not a url')).toBeNull();
   });
 });
+
+import { narrativeClaimFlags } from '../netlify/lib/guards.ts';
+describe('narrative claim flags', () => {
+  it('flags employer names and sweeping claims', () => {
+    expect(narrativeClaimFlags('As a captain at Southwest, I see students are most likely to quit.')).toHaveLength(2);
+  });
+  it('allows credentials and "in my experience" phrasing', () => {
+    expect(narrativeClaimFlags('As an airline captain and check airman with 32+ years of flying, in my experience mentors help.')).toEqual([]);
+  });
+});

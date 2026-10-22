@@ -97,7 +97,7 @@ export function nextDeadline(deadlines: Deadline[] | undefined, today: string): 
 
 /** Items the reviewer must resolve before approval. */
 export function openItems(args: {
-  deadlines: Deadline[]; awardsCount: number; inferred: number; unsupported: string[]; flags: string[]; ein?: string; missing: string[];
+  deadlines: Deadline[]; awardsCount: number; inferred: number; unsupported: string[]; claimFlags?: string[]; flags: string[]; ein?: string; missing: string[];
 }): string[] {
   const items: string[] = [];
   for (const m of args.missing) items.push(`Agent did not complete: ${m}. Re-run or research manually.`);
@@ -106,6 +106,20 @@ export function openItems(args: {
   if (args.awardsCount === 0) items.push('No past awards found: check 990 / grantee list manually.');
   if (args.inferred > 0) items.push(`${args.inferred} priority/eligibility fact(s) are inferred rather than confirmed: verify against official guidelines.`);
   if (args.unsupported.length) items.push(`Narrative contains figures not found in source data (${args.unsupported.join(', ')}): replace with verified data or delete.`);
+  for (const c of args.claimFlags ?? []) items.push(`Narrative ${c}.`);
   for (const f of args.flags.filter((x) => x.startsWith('HARD STOP'))) items.push(f);
   return items;
+}
+
+const EMPLOYERS = /\b(southwest|delta|united|american airlines|jetblue|alaska airlines|spirit|frontier|allegiant|hawaiian|fedex|ups airlines)\b/i;
+const OVERCLAIM = /\b(most likely|the majority of|vast majority|always|never fail|every single|all students)\b/i;
+
+/** Backstop checks on drafted narrative prose; returns human-readable review flags. */
+export function narrativeClaimFlags(body: string): string[] {
+  const flags: string[] = [];
+  const emp = body.match(EMPLOYERS);
+  if (emp) flags.push(`names an airline/employer ("${emp[0]}"): remove unless you have cleared it with your employer`);
+  const over = body.match(OVERCLAIM);
+  if (over) flags.push(`sweeping claim ("${over[0]}"): rephrase as "In my experience..." or replace with verified data`);
+  return flags;
 }

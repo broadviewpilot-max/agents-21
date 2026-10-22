@@ -17,7 +17,7 @@
     "Bahamas (scholarship preference)",
     "Developing countries (stated in mission)"
   ],
-  "founder": "Sean Smith, Founder & Executive Director; airline captain and check airman",
+  "founder": "Sean Smith, Founder & Executive Director; airline captain and check airman (32+ years of professional flying; approximately 8 years as an evaluator/check airman)",
   "selfReported": [
     {
       "claim": "More than $30,000 invested in aviation scholarships over five years",
@@ -77,5 +77,18 @@
       }
     ]
   },
-  "organizationStatus": "Newly IRS-recognized 501(c)(3); no Form 990 filings yet (confirmed by Sean 2026-10-22). Candid/GuideStar seal status: unknown. SAM.gov/UEI registration: unknown."
+  "organizationStatus": "Newly IRS-recognized 501(c)(3); no Form 990 filings yet (confirmed by Sean 2026-10-22). Candid/GuideStar seal status: unknown. SAM.gov/UEI registration: unknown.",
+  "founderCredentials": {
+    "source": "Stated by Sean Smith in his own standing brief; confirmed by Sean 2026-10-22.",
+    "role": "Founder & Executive Director, The Aimsir Foundation Inc.",
+    "aviation": [
+      "Airline captain",
+      "Airline check airman / evaluator"
+    ],
+    "experience": [
+      "32+ years of professional flying",
+      "Approximately 8 years as an evaluator/check airman"
+    ],
+    "employerNamePolicy": "Do NOT name the airline in any draft unless Sean explicitly adds it. Employer name-use rules are for Sean to check."
+  }
 }

@@ -74,7 +74,7 @@ export async function runPipeline(runId: string): Promise<void> {
     const inferred = [...(run.intelligence?.priorities ?? []), ...(run.intelligence?.eligibility ?? [])].filter((f) => f.status !== 'confirmed').length;
     const items = openItems({
       deadlines: deadlines?.deadlines ?? [], awardsCount: awards?.awards.length ?? 0, inferred,
-      unsupported: narr?.unsupported ?? [], flags: run.fit?.flags ?? [], ein: awards?.ein, missing,
+      unsupported: narr?.unsupported ?? [], claimFlags: narr?.claimFlags ?? [], flags: run.fit?.flags ?? [], ein: awards?.ein, missing,
     });
     const next = nextDeadline(deadlines?.deadlines, ctx.today);
     const headline = await step('Brief Editor', () => runEditor(ctx, run.fit, next, items.length));
