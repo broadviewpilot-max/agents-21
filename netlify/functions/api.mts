@@ -39,7 +39,7 @@ async function startRun(req: Request, funderId: string): Promise<Run | null> {
       headers: { 'content-type': 'application/json', 'x-app-password': req.headers.get('x-app-password') ?? '' },
       body: JSON.stringify({ runId: run.id }),
     });
-    if (!res.ok) throw new Error(`Background function answered HTTP ${res.status}${res.status === 404 ? ' (not deployed?)' : res.status === 401 ? ' (password mismatch)' : ''}`);
+    if (!res.ok) throw new Error(`Background function answered HTTP ${res.status}${res.status === 404 ? ' (function not deployed?)' : res.status === 401 ? ' (unauthorized: either the Netlify project is set to Private, which blocks server-to-server calls; click Make public in Netlify, or the APP_PASSWORD did not match)' : ''}`);
   } catch (e) {
     run.status = 'failed';
     run.error = `Could not start research job: ${e instanceof Error ? e.message : String(e)}`;
