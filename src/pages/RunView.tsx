@@ -38,6 +38,7 @@ export default function RunView({ runId }: { runId: string }) {
           return <tr key={a}><td>{a}</td><td>{l ? (l.ok ? <span className="pill green">done {(l.ms / 1000).toFixed(1)}s</span> : <span className="pill red">failed</span>) : <span className="pill gray">{run?.status === 'running' ? 'waiting' : 'queued'}</span>}</td><td className="muted">{l?.note}</td></tr>;
         })}
       </tbody></table></div>
+      {run?.status === 'queued' && Date.now() - new Date(run.startedAt).getTime() > 90000 && <div className="note">Still queued after 90 seconds. The research job may not have started. Re-run from Funders; if it repeats, tell Claude.</div>}
       {run?.status === 'failed' && <div className="err">Run failed: {run.error}</div>}
       <p className="muted">You will be taken to the brief when it is ready. You can leave this page; the run continues on the server.</p>
     </>

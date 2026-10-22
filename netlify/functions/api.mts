@@ -32,12 +32,20 @@ async function startRun(req: Request, funderId: string): Promise<Run | null> {
     creditsUsed: { scrapeCreators: 0, firecrawl: 0, claudeCalls: 0 }, logs: [],
   };
   await putJson('runs', run.id, run);
-  // Fire the background function; it returns 202 right away.
-  await fetch(new URL('/.netlify/functions/run-background', req.url), {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-app-password': req.headers.get('x-app-password') ?? '' },
-    body: JSON.stringify({ runId: run.id }),
-  });
+  // Fire the background function; it should answer 202 right away. If it does not, record why instead of leaving the run "queued" forever.
+  try {
+    const res = await fetch(new URL('/.netlify/functions/run-background', req.url), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-app-password': req.headers.get('x-app-password') ?? '' },
+      body: JSON.stringify({ runId: run.id }),
+    });
+    if (!res.ok) throw new Error(`Background function answered HTTP ${res.status}${res.status === 404 ? ' (not deployed?)' : res.status === 401 ? ' (password mismatch)' : ''}`);
+  } catch (e) {
+    run.status = 'failed';
+    run.error = `Could not start research job: ${e instanceof Error ? e.message : String(e)}`;
+    run.finishedAt = new Date().toISOString();
+    await putJson('runs', run.id, run);
+  }
   return run;
 }
 
