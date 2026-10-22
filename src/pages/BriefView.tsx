@@ -82,6 +82,10 @@ export default function BriefView({ briefId }: { briefId: string }) {
 
         <div className={`panel ${brief.openItems.length ? 'red' : 'green'}`} style={{ marginTop: 10 }}><h4>Verify before approval ({brief.openItems.length})</h4>
           <ul>{brief.openItems.map((i) => <li key={i}>{i} <button className="btn alt noprint" disabled={locked} onClick={() => save({ resolvedItems: [i] })}>Resolved</button></li>)}{!brief.openItems.length && <li>None outstanding</li>}</ul></div>
+        {run?.logs.some((l) => !l.ok) && (
+          <div className="panel red noprint" style={{ marginTop: 10 }}><h4>Agent errors (technical)</h4>
+            <ul>{run.logs.filter((l) => !l.ok).map((l) => <li key={l.agent}><strong>{l.agent}:</strong> {l.note ?? 'unknown error'}</li>)}</ul></div>
+        )}
         <div className="muted" style={{ marginTop: 6 }}>CONF = cites a source seen by the agent · INFER = judgment, verify · UNK = not found. Sources: {run?.creditsUsed.scrapeCreators ?? 0} search credits, {run?.creditsUsed.claudeCalls ?? 0} model calls.</div>
       </article>
 
