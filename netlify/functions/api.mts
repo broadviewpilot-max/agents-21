@@ -6,7 +6,7 @@ import { loadPrograms, loadScoring } from '../lib/orchestrator.ts';
 import { askJson, newMeter } from '../lib/claude.ts';
 import { creditBalance } from '../lib/sources/scrapecreators.ts';
 import { delKey, getJson, listJson, putJson } from '../lib/store.ts';
-import { authorized, isOpen, json, uid } from '../lib/util.ts';
+import { authorized, isOpen, json, normalizeEin, normalizeUrl, uid } from '../lib/util.ts';
 
 export const config: Config = { path: '/api/*' };
 
@@ -85,7 +85,11 @@ export default async (req: Request) => {
       if (!id && method === 'POST') {
         const b = (await req.json()) as { name?: string; type?: FunderType; url?: string; ein?: string };
         if (!b.name?.trim()) return json({ error: 'name required' }, 400);
-        return json(await createFunder(b.name, TYPES.includes(b.type as FunderType) ? (b.type as FunderType) : 'other', b.url, b.ein), 201);
+        const url = normalizeUrl(b.url ?? '');
+        const ein = normalizeEin(b.ein ?? '');
+        if (url === null) return json({ error: 'Website must be a valid http(s) address' }, 400);
+        if (ein === null) return json({ error: 'EIN must be 9 digits, e.g. 12-3456789' }, 400);
+        return json(await createFunder(b.name, TYPES.includes(b.type as FunderType) ? (b.type as FunderType) : 'other', url || undefined, ein || undefined), 201);
       }
       if (id === 'seed' && method === 'POST') {
         const existing = new Set((await listJson<Funder>('funders')).map((f) => f.name));
@@ -99,8 +103,16 @@ export default async (req: Request) => {
         const b = (await req.json()) as Partial<Pick<Funder, 'stage' | 'notes' | 'url' | 'ein'>>;
         if (b.stage && STAGES.includes(b.stage)) f.stage = b.stage;
         if (typeof b.notes === 'string') f.notes = b.notes;
-        if (typeof b.url === 'string') f.url = b.url || undefined;
-        if (typeof b.ein === 'string') f.ein = b.ein || undefined;
+        if (typeof b.url === 'string') {
+          const u = normalizeUrl(b.url);
+          if (u === null) return json({ error: 'Website must be a valid http(s) address, e.g. https://example.org' }, 400);
+          f.url = u || undefined;
+        }
+        if (typeof b.ein === 'string') {
+          const e = normalizeEin(b.ein);
+          if (e === null) return json({ error: 'EIN must be 9 digits, e.g. 12-3456789' }, 400);
+          f.ein = e || undefined;
+        }
         await putJson('funders', f.id, f);
         return json(f);
       }

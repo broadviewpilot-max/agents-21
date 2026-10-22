@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import type { Funder, FunderType } from '../../shared/types.ts';
-import { api, post } from '../api.ts';
+import { api, patch, post } from '../api.ts';
 
 const TYPES: FunderType[] = ['private-foundation', 'corporate', 'federal', 'public-charity', 'community-foundation', 'state-local', 'other'];
 
@@ -9,6 +9,8 @@ export default function Funders() {
   const [name, setName] = useState(''); const [type, setType] = useState<FunderType>('private-foundation');
   const [url, setUrl] = useState(''); const [ein, setEin] = useState('');
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [eUrl, setEUrl] = useState(''); const [eEin, setEEin] = useState('');
   const load = () => api<Funder[]>('funders').then(setFunders).catch((e) => setErr(e.message));
   useEffect(() => { load(); }, []);
 
@@ -20,6 +22,11 @@ export default function Funders() {
   async function run(f: Funder) {
     setErr('');
     try { const r = await post<{ id: string }>('runs', { funderId: f.id }); location.hash = `#/run/${r.id}`; } catch (x) { setErr((x as Error).message); }
+  }
+  function startEdit(f: Funder) { setEditId(f.id); setEUrl(f.url ?? ''); setEEin(f.ein ?? ''); setErr(''); }
+  async function saveEdit(f: Funder) {
+    setErr('');
+    try { await patch(`funders/${f.id}`, { url: eUrl, ein: eEin }); setEditId(null); load(); } catch (x) { setErr((x as Error).message); }
   }
   async function remove(f: Funder) {
     if (!confirm(`Delete ${f.name}? Its briefs stay stored but it leaves the pipeline.`)) return;
@@ -41,11 +48,24 @@ export default function Funders() {
       <div className="card"><table>
         <thead><tr><th>Funder</th><th>Type</th><th>Stage</th><th>Fit</th><th></th></tr></thead>
         <tbody>{funders.map((f) => (
-          <tr key={f.id}>
-            <td>{f.briefId ? <a href={`#/brief/${f.briefId}`}>{f.name}</a> : f.name}</td><td>{f.type}</td><td>{f.stage}</td>
+          <Fragment key={f.id}>
+          <tr>
+            <td>{f.briefId ? <a href={`#/brief/${f.briefId}`}>{f.name}</a> : f.name}<div className="muted">{f.url ? f.url.replace(/^https?:\/\//, '').slice(0, 48) : 'no website'} · {f.ein ? `EIN ${f.ein}` : 'no EIN'}</div></td><td>{f.type}</td><td>{f.stage}</td>
             <td>{f.fitTotal !== undefined ? `${f.fitTotal} · ${f.recommendation}` : '—'}</td>
-            <td className="row"><button className="btn" onClick={() => run(f)}>{f.briefId ? 'Re-run research' : 'Run research'}</button><button className="btn alt" onClick={() => remove(f)}>Delete</button></td>
+            <td className="row"><button className="btn" onClick={() => run(f)}>{f.briefId ? 'Re-run research' : 'Run research'}</button><button className="btn alt" onClick={() => (editId === f.id ? setEditId(null) : startEdit(f))}>Edit details</button><button className="btn alt" onClick={() => remove(f)}>Delete</button></td>
           </tr>
+          {editId === f.id && (
+            <tr><td colSpan={5}>
+              <div className="row">
+                <div className="grow"><label className="muted">Official website (the funder's own site)</label><input type="text" value={eUrl} onChange={(e) => setEUrl(e.target.value)} placeholder="https://" /></div>
+                <div><label className="muted">EIN</label><input type="text" value={eEin} onChange={(e) => setEEin(e.target.value)} placeholder="12-3456789" /></div>
+                <button className="btn" onClick={() => saveEdit(f)}>Save</button>
+                <button className="btn alt" onClick={() => setEditId(null)}>Cancel</button>
+              </div>
+              <div className="muted">Saved values are used on the next research run, so click Re-run research after saving. Leave a field empty to clear it.</div>
+            </td></tr>
+          )}
+          </Fragment>
         ))}</tbody>
       </table></div>
       <p className="muted">A run takes a few minutes and uses a handful of Scrape Creators credits (capped per run).</p>

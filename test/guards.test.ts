@@ -124,3 +124,20 @@ describe('official site filter', () => {
     expect(isOfficialSite(undefined)).toBe(false);
   });
 });
+
+import { normalizeEin, normalizeUrl } from '../netlify/lib/util.ts';
+describe('funder detail validation', () => {
+  it('normalizes EINs', () => {
+    expect(normalizeEin('222621967')).toBe('22-2621967');
+    expect(normalizeEin('22-2621967')).toBe('22-2621967');
+    expect(normalizeEin('')).toBe('');
+    expect(normalizeEin('12-345')).toBeNull();
+    expect(normalizeEin('ab-cdefghi')).toBeNull();
+  });
+  it('normalizes and validates URLs', () => {
+    expect(normalizeUrl('geaerospace.com')).toBe('https://geaerospace.com/');
+    expect(normalizeUrl('')).toBe('');
+    expect(normalizeUrl('javascript:alert(1)')).toBeNull();
+    expect(normalizeUrl('not a url')).toBeNull();
+  });
+});
