@@ -24,6 +24,16 @@ export async function runAwards(ctx: Ctx): Promise<AwardsResult> {
         evidence += block('PROPUBLICA SEARCH TOP MATCH (verify it is the right entity)', `${top.name}, ${top.city} ${top.state}, EIN ${top.strein}, NTEE ${top.ntee_code ?? 'n/a'}`);
       }
     }
+    if (!ein) {
+      // Second chance: a web search that often surfaces the EIN in registry snippets. Treated as a candidate to verify.
+      const eh = await googleSearch(`"${funder.name}" EIN nonprofit 990`, meter);
+      eh.forEach((h) => ctx.allowedUrls.add(h.url));
+      const m = eh.map((h) => `${h.title} ${h.description}`.match(/\b\d{2}-\d{7}\b/)?.[0]).find(Boolean);
+      if (m) {
+        ein = m;
+        evidence += block('EIN CANDIDATE FROM WEB SEARCH (unverified; confirm it is the right entity)', `${m}\n` + eh.map((h) => `${h.url} ${h.title}`).join('\n'));
+      }
+    }
     if (ein) {
       filingsUrl = nonprofitPage(ein);
       ctx.allowedUrls.add(filingsUrl);

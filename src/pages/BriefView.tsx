@@ -56,8 +56,7 @@ export default function BriefView({ briefId }: { briefId: string }) {
 
         <div className={`panel ${recCls}`}>
           <div className="row"><div className="score">{fit?.total ?? '—'}</div><div className="grow"><h4>Recommendation: {rec ?? 'Not scored'}</h4>
-            <textarea className="noprint" rows={2} style={{ minHeight: 0 }} value={brief.headline} disabled={locked} onChange={(e) => setData({ ...data, brief: { ...brief, headline: e.target.value } })} onBlur={(e) => save({ headline: e.target.value })} />
-            <div className="printonly" style={{ fontWeight: 600 }}>{brief.headline}</div></div></div>
+            <div style={{ fontWeight: 600 }}>{brief.headline}</div></div></div>
           {fit?.flags.length ? <ul>{fit.flags.map((f) => <li key={f}>{f}</li>)}</ul> : null}
         </div>
 
@@ -90,7 +89,9 @@ export default function BriefView({ briefId }: { briefId: string }) {
       </article>
 
       <section className="card noprint" style={{ marginTop: 14 }}>
-        <h3 style={{ marginTop: 0 }}>Edit full narrative drafts</h3>
+        <h3 style={{ marginTop: 0 }}>Edit headline</h3>
+        <textarea rows={2} disabled={locked} value={brief.headline} onChange={(e) => setData({ ...data, brief: { ...brief, headline: e.target.value } })} onBlur={(e) => save({ headline: e.target.value })} />
+        <h3>Edit full narrative drafts</h3>
         {brief.narrative.map((n, idx) => (
           <div key={n.id} style={{ marginBottom: 10 }}>
             <strong>{n.title}</strong>

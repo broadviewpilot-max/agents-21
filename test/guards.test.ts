@@ -115,3 +115,12 @@ describe('access mode', () => {
     delete process.env.APP_PASSWORD;
   });
 });
+
+import { isOfficialSite } from '../netlify/lib/agents/intelligence.ts';
+describe('official site filter', () => {
+  it('rejects directory sites and accepts funder domains', () => {
+    expect(isOfficialSite('https://www.insidephilanthropy.com/find-a-grant/grants-g/ge-foundation')).toBe(false);
+    expect(isOfficialSite('https://www.ge.com/aerospace/foundation')).toBe(true);
+    expect(isOfficialSite(undefined)).toBe(false);
+  });
+});
