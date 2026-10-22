@@ -3,6 +3,7 @@ import seed from '../../config/funders-seed.json';
 import type { Brief, BriefState, Funder, FunderType, Program, Run, ScoringConfig, Stage } from '../../shared/types.ts';
 import { buildIcs } from '../lib/ics.ts';
 import { loadPrograms, loadScoring } from '../lib/orchestrator.ts';
+import { askJson, newMeter } from '../lib/claude.ts';
 import { creditBalance } from '../lib/sources/scrapecreators.ts';
 import { delKey, getJson, listJson, putJson } from '../lib/store.ts';
 import { authorized, isOpen, json, uid } from '../lib/util.ts';
@@ -51,6 +52,14 @@ export default async (req: Request) => {
   try {
     if (root === 'session') return json({ ok: true, open: isOpen() });
 
+    if (root === 'health' && id === 'claude' && method === 'POST') {
+      try {
+        const r = await askJson<{ ok: boolean }>(newMeter(), 'Reply with JSON only.', 'Return {"ok": true}', 50);
+        return json({ ok: !!r.ok });
+      } catch (e) {
+        return json({ ok: false, error: e instanceof Error ? e.message : String(e) });
+      }
+    }
     if (root === 'health') {
       return json({
         open: isOpen(),
