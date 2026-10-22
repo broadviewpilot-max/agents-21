@@ -5,7 +5,7 @@ import { buildIcs } from '../lib/ics.ts';
 import { loadPrograms, loadScoring } from '../lib/orchestrator.ts';
 import { creditBalance } from '../lib/sources/scrapecreators.ts';
 import { delKey, getJson, listJson, putJson } from '../lib/store.ts';
-import { authorized, json, uid } from '../lib/util.ts';
+import { authorized, isOpen, json, uid } from '../lib/util.ts';
 
 export const config: Config = { path: '/api/*' };
 
@@ -21,6 +21,11 @@ async function createFunder(name: string, type: FunderType, url?: string, ein?: 
 async function startRun(req: Request, funderId: string): Promise<Run | null> {
   const funder = await getJson<Funder>('funders', funderId);
   if (!funder) return null;
+  // Cost guard (matters most in open mode): cap research runs per UTC day.
+  const today = new Date().toISOString().slice(0, 10);
+  const cap = Number(process.env.MAX_RUNS_PER_DAY || 25);
+  const todays = (await listJson<Run>('runs')).filter((r) => r.startedAt.startsWith(today)).length;
+  if (todays >= cap) throw new Error(`Daily run limit reached (${cap}). Raise MAX_RUNS_PER_DAY or try tomorrow.`);
   const run: Run = {
     id: uid('run'), funderId, status: 'queued', startedAt: new Date().toISOString(),
     creditsUsed: { scrapeCreators: 0, firecrawl: 0, claudeCalls: 0 }, logs: [],
@@ -44,11 +49,11 @@ export default async (req: Request) => {
   if (!authorized(req)) return json({ error: 'Unauthorized' }, 401);
 
   try {
-    if (root === 'session') return json({ ok: true });
+    if (root === 'session') return json({ ok: true, open: isOpen() });
 
     if (root === 'health') {
       return json({
-        appPassword: !!process.env.APP_PASSWORD,
+        open: isOpen(),
         scrapeCreatorsKey: !!process.env.SCRAPECREATORS_API_KEY,
         scrapeCreatorsCredits: await creditBalance(),
         anthropicKey: !!process.env.ANTHROPIC_API_KEY,

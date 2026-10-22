@@ -102,3 +102,16 @@ describe('misc', () => {
     expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(1);
   });
 });
+
+import { authorized } from '../netlify/lib/util.ts';
+describe('access mode', () => {
+  const req = (pw?: string) => new Request('https://x/api/funders', { headers: pw ? { 'x-app-password': pw } : {} });
+  it('is open when APP_PASSWORD is unset', () => { delete process.env.APP_PASSWORD; expect(authorized(req())).toBe(true); });
+  it('enforces the password once set', () => {
+    process.env.APP_PASSWORD = 'secret-pass';
+    expect(authorized(req())).toBe(false);
+    expect(authorized(req('wrong-pass!'))).toBe(false);
+    expect(authorized(req('secret-pass'))).toBe(true);
+    delete process.env.APP_PASSWORD;
+  });
+});

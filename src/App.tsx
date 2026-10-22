@@ -19,7 +19,7 @@ function Login({ onOk }: { onOk: () => void }) {
   async function go(e: React.FormEvent) {
     e.preventDefault();
     setPw(pw);
-    try { await api('session'); onOk(); } catch { setPw(''); setErr('Incorrect password, or APP_PASSWORD is not set on the server.'); }
+    try { await api('session'); onOk(); } catch { setPw(''); setErr('Incorrect password.'); }
   }
   return (
     <form className="card login" onSubmit={go}>
@@ -35,11 +35,11 @@ function Login({ onOk }: { onOk: () => void }) {
 export default function App() {
   const [authed, setAuthed] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [open, setOpen] = useState(false);
   const route = useHash();
 
   useEffect(() => {
-    if (!getPw()) { setChecked(true); return; }
-    api('session').then(() => setAuthed(true)).catch(() => setPw('')).finally(() => setChecked(true));
+    api<{ open: boolean }>('session').then((r) => { setOpen(r.open); setAuthed(true); }).catch(() => setPw('')).finally(() => setChecked(true));
   }, []);
 
   if (!checked) return null;
@@ -61,6 +61,7 @@ export default function App() {
         </nav>
         <a href="#/" style={{ color: '#dbe7f6' }} onClick={() => { setPw(''); setAuthed(false); }}>Sign out</a>
       </header>
+      {open && <div className="note" style={{ margin: 0, borderRadius: 0, textAlign: 'center' }}>Open mode: no password is set, so anyone with this URL can use the app and spend your API credits. Set <code>APP_PASSWORD</code> in Netlify to lock it.</div>}
       <main>
         {!page && <Pipeline />}
         {page === 'funders' && <Funders />}

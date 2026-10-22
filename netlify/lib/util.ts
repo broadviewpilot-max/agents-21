@@ -3,9 +3,12 @@ import { timingSafeEqual } from 'node:crypto';
 export const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
 
+/** TEMPORARY open mode: with no APP_PASSWORD set, the app is open to anyone with the URL. */
+export const isOpen = () => !process.env.APP_PASSWORD;
+
 export function authorized(req: Request): boolean {
   const pw = process.env.APP_PASSWORD;
-  if (!pw) return false; // fail closed: no password configured => no access
+  if (!pw) return true; // open mode (temporary, by owner's choice); set APP_PASSWORD to lock the site
   const given = req.headers.get('x-app-password') ?? '';
   const a = Buffer.from(given);
   const b = Buffer.from(pw);

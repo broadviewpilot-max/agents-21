@@ -136,3 +136,5 @@ Briefs cannot be marked Approved while any "Verify" item is unresolved unless Se
 - Calendar: v1 provides a **downloadable .ics file** (opens in Google/Apple/Outlook Calendar). A live subscription feed is deferred.
 - Deploy: Sean connects the repo to Netlify; code is pushed directly to `main` per Sean's instruction. No PR.
 - Found during research: IRS/ProPublica lists "Aimsir Foundation" (EIN 33-2801792, Lauderhill FL, NTEE B82) with no 990 filings shown. Funders check this; confirm entity and filing status. **[Open]**
+
+**v1.2 — 2026-10-22:** Password gate made optional at Sean's request (time-boxed launch). With `APP_PASSWORD` unset the app runs in open mode with a visible banner; a `MAX_RUNS_PER_DAY` cap (default 25) bounds cost. **[Open: Sean to set APP_PASSWORD later]**

@@ -14,7 +14,8 @@ Agents: Funder Intelligence → (Awards & 990 ∥ Deadlines) → Fit Scoring →
 2. Site configuration > Environment variables (see `.env.example`):
    | Variable | Required | Notes |
    |---|---|---|
-   | `APP_PASSWORD` | yes | Login passphrase. Unset = nobody can sign in. |
+   | `APP_PASSWORD` | no (for now) | Unset = **open mode**: anyone with the URL can use the app and spend your API credits. Set it later to enable the login gate. |
+   | `MAX_RUNS_PER_DAY` | no | Default 25. Cost guard on research runs. |
    | `SCRAPECREATORS_API_KEY` | yes | Google search + LinkedIn signals. |
    | `ANTHROPIC_API_KEY` | yes | Powers the agents. Create at platform.claude.com/settings/keys (API billing is separate from a Claude subscription). |
    | `FIRECRAWL_API_KEY` | no | Better page reading; falls back to plain fetch. |
