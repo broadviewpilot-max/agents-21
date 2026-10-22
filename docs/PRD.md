@@ -130,7 +130,7 @@ Briefs cannot be marked Approved while any "Verify" item is unresolved unless Se
 **v1.1 — 2026-10-22 (after Sean's answers)**
 - Anthropic key: Sean creates it at platform.claude.com/settings/keys (API billing is separate from a Claude subscription). **[Open: Sean to create and add to Netlify]**
 - Firecrawl: used during build via the connected MCP. In production it is **optional**: without `FIRECRAWL_API_KEY` the app reads pages with plain fetch. **[Decision]**
-- Aimsir program list: researched and seeded in `config/aimsir-programs.json` (5 draft programs from Aimsir's own site/Instagram, with sources); editable and confirmable on the Programs page. Aimsir profile seeded in `config/aimsir-profile.json`; self-reported claims are labeled. **[Open: Sean confirms]**
+- Aimsir program list: researched and seeded in `config/aimsir-programs.json` (5 draft programs from Aimsir's own site/Instagram, with sources); editable and confirmable on the Programs page. Aimsir profile seeded in `config/aimsir-profile.json`; self-reported claims are labeled. **[Confirmed by Sean 2026-10-22]**
 - Starter test funders: FAA Aviation Workforce Development Grants, Boeing, GE Aerospace Foundation, AOPA Foundation, Community Foundation of Broward — candidates to evaluate, not verified fits.
 - Password: app-level single-user gate (`APP_PASSWORD`), because Netlify site-wide password protection is a paid-plan feature. **[Decision]**
 - Calendar: v1 provides a **downloadable .ics file** (opens in Google/Apple/Outlook Calendar). A live subscription feed is deferred.

@@ -1,17 +1,22 @@
 {
-  "_note": "Every fact below was taken from Aimsir's own public channels or public registries on 2026-10-21. 'selfReported' = Aimsir's own claim, not independently verified. Sean must review before any external use.",
+  "_note": "Facts taken from Aimsir's public channels and public registries on 2026-10-21; Sean Smith confirmed the profile details correct on 2026-10-22. 'selfReported' = Aimsir's own claim.",
   "legalName": "The Aimsir Foundation Inc.",
   "tagline": "Inspiring the skies, changing lives.",
   "taxStatus": "501(c)(3) (stated on Aimsir's website and Instagram)",
   "ein": {
     "value": "33-2801792",
     "source": "https://projects.propublica.org/nonprofits/api/v2/search.json?q=aimsir+foundation",
-    "note": "IRS Business Master File listing via ProPublica: 'Aimsir Foundation', Lauderhill FL, NTEE B82 (scholarships), 501(c)(3). No 990 filings were listed at lookup. OPEN ITEM: Sean to confirm this is the correct legal entity and 990 filing status."
+    "note": "IRS Business Master File listing via ProPublica: 'Aimsir Foundation', Lauderhill FL, NTEE B82 (scholarships), 501(c)(3). Confirmed correct by Sean 2026-10-22. No 990 filings exist yet (new organization); expect funders to ask about this."
   },
   "missionStatement": "The Aimsir Foundation empowers marginalized and underserved communities in both developing countries and the United States by fostering growth and development in aviation and related STEM fields.",
   "missionSource": "https://theaimsirfoundation.org/",
   "audience": "Underserved and underrepresented students (middle school through early-career training).",
-  "geography": ["Florida (Broward County area outreach)", "Baton Rouge, Louisiana (First Flight Forward)", "Bahamas (scholarship preference)", "Developing countries (stated in mission)"],
+  "geography": [
+    "Florida (Broward County area outreach)",
+    "Baton Rouge, Louisiana (First Flight Forward)",
+    "Bahamas (scholarship preference)",
+    "Developing countries (stated in mission)"
+  ],
   "founder": "Sean Smith, Founder & Executive Director; airline captain and check airman",
   "selfReported": [
     {
@@ -31,8 +36,16 @@
     }
   ],
   "partners": [
-    { "name": "Helix Aviation Academy", "role": "First Flight Forward partner; student outreach host (Baton Rouge, LA)", "source": "https://www.instagram.com/reel/DYAFPGLuNqs/" },
-    { "name": "Gulf Coast Aviation", "role": "First Flight Forward partner (Baton Rouge, LA)", "source": "https://www.instagram.com/reel/DYAFPGLuNqs/" }
+    {
+      "name": "Helix Aviation Academy",
+      "role": "First Flight Forward partner; student outreach host (Baton Rouge, LA)",
+      "source": "https://www.instagram.com/reel/DYAFPGLuNqs/"
+    },
+    {
+      "name": "Gulf Coast Aviation",
+      "role": "First Flight Forward partner (Baton Rouge, LA)",
+      "source": "https://www.instagram.com/reel/DYAFPGLuNqs/"
+    }
   ],
   "rules": [
     "Never state participant counts, outcomes, or financial totals that are not listed in this file.",

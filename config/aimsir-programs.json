@@ -1,55 +1,99 @@
 {
-  "_note": "DRAFT program list researched from Aimsir's public website and Instagram on 2026-10-21. Status 'draft' until Sean confirms each program in the app (Programs page). Descriptions use Aimsir's own wording where possible. No participant counts or budgets are included because none were verifiable.",
+  "_note": "Program list researched from Aimsir's public website and Instagram on 2026-10-21; confirmed correct by Sean Smith on 2026-10-22. No participant counts or budgets are included because none were verifiable.",
   "programs": [
     {
       "id": "first-flight-forward",
       "name": "First Flight Forward",
-      "status": "draft",
+      "status": "confirmed",
       "summary": "Fully funds students to experience aviation firsthand, from ground school through a first discovery flight, delivered with Helix Aviation Academy and Gulf Coast Aviation in Baton Rouge, Louisiana. Launch announcement stated 10 students fully funded.",
       "audience": "Students from underserved communities",
       "geography": "Baton Rouge, Louisiana",
-      "keywords": ["discovery flight", "ground school", "youth", "access", "flight training"],
-      "sources": ["https://www.instagram.com/reel/DYAFPGLuNqs/"]
+      "keywords": [
+        "discovery flight",
+        "ground school",
+        "youth",
+        "access",
+        "flight training"
+      ],
+      "sources": [
+        "https://www.instagram.com/reel/DYAFPGLuNqs/"
+      ]
     },
     {
       "id": "bannister-scholarship",
       "name": "Joyce Bannister Memorial Aviation Scholarship",
-      "status": "draft",
+      "status": "confirmed",
       "summary": "$10,000 award toward private through commercial pilot certificate or rating. Applicant must be 16+, hold a Student Pilot Certificate, and be a US citizen/permanent resident or able to train in the US; preference to applicants in or from the Bahamas. 5th annual cycle ran Jan 2-31, 2026 with announcement Feb 14; funds released on verified acceptance to an approved program with 12 months to use.",
       "audience": "Aspiring pilots, 16+, preference Bahamas",
       "geography": "United States / Bahamas",
-      "keywords": ["scholarship", "pilot certificate", "flight training", "Bahamas", "underrepresented"],
-      "sources": ["https://www.instagram.com/reel/DS_9yk_DqOb/", "https://www.instagram.com/reel/DU0AU5qjtUI/"]
+      "keywords": [
+        "scholarship",
+        "pilot certificate",
+        "flight training",
+        "Bahamas",
+        "underrepresented"
+      ],
+      "sources": [
+        "https://www.instagram.com/reel/DS_9yk_DqOb/",
+        "https://www.instagram.com/reel/DU0AU5qjtUI/"
+      ]
     },
     {
       "id": "aviation-scholarships",
       "name": "Aviation & STEM Scholarships",
-      "status": "draft",
+      "status": "confirmed",
       "summary": "Targeted financial support for training milestones such as ground school, medical exams, checkrides and equipment, plus STEM learning experiences.",
       "audience": "Students from underserved communities",
       "geography": "United States and developing countries (per mission)",
-      "keywords": ["scholarship", "ground school", "medical exam", "checkride", "equipment"],
-      "sources": ["https://theaimsirfoundation.org/"]
+      "keywords": [
+        "scholarship",
+        "ground school",
+        "medical exam",
+        "checkride",
+        "equipment"
+      ],
+      "sources": [
+        "https://theaimsirfoundation.org/"
+      ]
     },
     {
       "id": "mentorship",
       "name": "Mentorship & Pathways",
-      "status": "draft",
+      "status": "confirmed",
       "summary": "Pairs students with aviation and STEM professionals who help translate 'I want to fly' into a plan: prerequisites, timelines, safety culture and options across aviation careers from pilot to engineer.",
       "audience": "Students and early-career aspirants",
       "geography": "Not stated",
-      "keywords": ["mentorship", "career pathways", "workforce", "role models"],
-      "sources": ["https://theaimsirfoundation.org/"]
+      "keywords": [
+        "mentorship",
+        "career pathways",
+        "workforce",
+        "role models"
+      ],
+      "sources": [
+        "https://theaimsirfoundation.org/"
+      ]
     },
     {
       "id": "stem-outreach",
       "name": "Aviation STEM Education & Community Outreach",
-      "status": "draft",
+      "status": "confirmed",
       "summary": "Hands-on workshops (flight simulators, maintenance demos, drone safety, coding, aerodynamics), school visits and career events that show aviation as an industry, not just a job. Examples posted: school visit at North Lauderdale Elementary (FL), Helix Aviation Academy talk, October 3 event at the National Museum of the United States Air Force (Dayton, OH).",
       "audience": "Elementary through high-school students; educators and families",
       "geography": "Florida, Louisiana, Ohio (examples posted)",
-      "keywords": ["STEM", "workshop", "drone", "simulator", "outreach", "career exploration", "school visits"],
-      "sources": ["https://theaimsirfoundation.org/", "https://www.instagram.com/reel/DeFI8P_h98G/", "https://www.instagram.com/reel/DdnfMunubUL/"]
+      "keywords": [
+        "STEM",
+        "workshop",
+        "drone",
+        "simulator",
+        "outreach",
+        "career exploration",
+        "school visits"
+      ],
+      "sources": [
+        "https://theaimsirfoundation.org/",
+        "https://www.instagram.com/reel/DeFI8P_h98G/",
+        "https://www.instagram.com/reel/DdnfMunubUL/"
+      ]
     }
   ]
 }
