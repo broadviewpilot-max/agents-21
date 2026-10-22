@@ -34,6 +34,8 @@ Rules:
 - Self-reported claims must be phrased as Aimsir's own statements ("Aimsir reports...").
 - Never include participant-level detail; keep minors generic.
 - Do not claim eligibility, registration (SAM.gov etc.) or partnerships beyond the PROFILE.
+- Funder-facing prose must read as finished, confident text. NEVER write sentences like "we have not confirmed", "we have not yet assembled", or "status unknown" in the body. Put every uncertainty in a bracketed [INSERT VERIFIED DATA: ...] placeholder and list it in needsData.
+- Do not make commitments or scope statements about what Aimsir will or will not request, offer, or do beyond the PROFILE and PROGRAMS.
 - 90-140 words per section.`,
     `PROFILE:\n${JSON.stringify(profile, null, 1)}\n\nPROGRAMS TO FEATURE:\n${use.map((p) => `- ${p.name}: ${p.summary}`).join('\n')}\n\nFUNDER: ${ctx.funder.name}\nFUNDER FINDINGS:\n${JSON.stringify(intelligence ?? {}, null, 1).slice(0, 9000)}\n\nFIT RATIONALE:\n${(fit?.criteria ?? []).map((c) => `${c.label}: ${c.rationale}`).join('\n')}\n\nReturn JSON: {"sections":[{"id":"overview|need|program|alignment","body":string,"needsData":[strings describing data to insert]}]} for ids ${SECTIONS.map((s) => s.id).join(', ')}.`,
     4500,

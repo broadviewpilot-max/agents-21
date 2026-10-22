@@ -1,7 +1,7 @@
 import type { Deadline, DeadlinesResult } from '../../../shared/types.ts';
 import { askJson } from '../claude.ts';
 import { sanitizeDeadlines } from '../guards.ts';
-import { oppUrl, searchOpportunities, toIso } from '../sources/grantsgov.ts';
+import { oppUrl, searchOpportunities } from '../sources/grantsgov.ts';
 import { googleSearch } from '../sources/scrapecreators.ts';
 import { isSocial, readPage } from '../sources/web.ts';
 import { block, Ctx, GUARD } from './context.ts';
@@ -10,7 +10,6 @@ import { block, Ctx, GUARD } from './context.ts';
 export async function runDeadlines(ctx: Ctx, intelligenceUrls: string[]): Promise<DeadlinesResult> {
   const { funder, meter } = ctx;
   let evidence = '';
-  const direct: Deadline[] = [];
 
   if (funder.type === 'federal') {
     const keyword = funder.name.replace(/grants?|program/gi, '').trim();
@@ -18,8 +17,6 @@ export async function runDeadlines(ctx: Ctx, intelligenceUrls: string[]): Promis
     for (const o of opps) {
       const url = oppUrl(o.id);
       ctx.allowedUrls.add(url);
-      const date = toIso(o.closeDate);
-      if (date) direct.push({ label: `${o.number}: ${o.title}`.slice(0, 140), date, kind: 'application', status: 'confirmed', sourceUrl: url });
       evidence += block(`GRANTS.GOV ${url}`, `${o.number} | ${o.title} | ${o.agency} | open ${o.openDate ?? 'n/a'} | close ${o.closeDate ?? 'n/a'} | ${o.status ?? ''}`);
     }
   }
@@ -37,7 +34,8 @@ export async function runDeadlines(ctx: Ctx, intelligenceUrls: string[]): Promis
   const raw = await askJson<{ deadlines?: Deadline[]; note?: string }>(
     meter,
     `You are a grant-calendar analyst. Today is ${ctx.today}. ${GUARD}
-Only list a date if the evidence states it. Dates must be ISO YYYY-MM-DD. If a program is rolling or by invitation, add a deadline with kind "rolling" and NO date.
+Only list a date if the evidence states it.
+GRANTS.GOV entries are raw keyword matches and often belong to OTHER agencies or programs. Include one only if its agency/program is the funder named (e.g. for an FAA program, only FAA or Department of Transportation notices). Never list another agency's notice as this funder's deadline. Dates must be ISO YYYY-MM-DD. If a program is rolling or by invitation, add a deadline with kind "rolling" and NO date.
 Only list programs plausibly relevant to Aimsir (aviation, STEM, youth education, mentorship, scholarships for students from underserved communities). Mention excluded unrelated programs in "note" instead of listing them.
 Do not infer a recurring annual date from a past year unless you mark it "inferred".`,
     `Funder: ${funder.name}
@@ -47,8 +45,7 @@ ${evidence}`,
   );
 
   const parsed = sanitizeDeadlines(raw.deadlines, ctx.allowedUrls);
-  const seen = new Set(direct.map((d) => d.date + d.label));
-  const merged = [...direct, ...parsed.filter((d) => !seen.has(d.date + d.label))].sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999'));
+  const merged = parsed.sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999'));
   return {
     deadlines: merged,
     note: raw.note ?? (merged.length ? '' : 'No deadlines found. Unconfirmed: verify with funder.'),
