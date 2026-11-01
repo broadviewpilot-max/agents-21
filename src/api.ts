@@ -10,7 +10,8 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     headers: { 'content-type': 'application/json', 'x-app-password': getPw(), ...(init.headers ?? {}) },
   });
   if (!res.ok) {
-    let msg = res.statusText;
+    let msg = res.statusText || `Server error (HTTP ${res.status})`;
+    if (res.status === 502 || res.status === 504) msg = `The server took too long to answer (HTTP ${res.status}). Try again in a minute.`;
     try { msg = ((await res.json()) as { error?: string }).error ?? msg; } catch { /* non-JSON error body */ }
     throw new ApiError(res.status, msg);
   }

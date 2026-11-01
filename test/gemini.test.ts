@@ -38,3 +38,19 @@ describe('geminiJson resilience', () => {
     await expect(geminiJson(meter(), 'p')).rejects.toThrow(/gemini-x-flash/);
   });
 });
+
+describe('geminiJson fast test mode', () => {
+  beforeEach(() => { process.env.GEMINI_API_KEY = 'k'; process.env.GEMINI_RETRY_MS = '0'; });
+  afterEach(() => vi.unstubAllGlobals());
+  it('makes a single attempt with no fallback when asked, and reports it clearly', async () => {
+    const f = vi.fn(async () => err(503, 'busy'));
+    vi.stubGlobal('fetch', f);
+    await expect(geminiJson(meter(), 'p', { attempts: 1, noFallback: true })).rejects.toThrow(/Gemini HTTP 503/);
+    expect(f).toHaveBeenCalledTimes(1);
+  });
+  it('turns a timeout into a readable message', async () => {
+    const e = new Error('aborted'); e.name = 'TimeoutError';
+    vi.stubGlobal('fetch', vi.fn(async () => { throw e; }));
+    await expect(geminiJson(meter(), 'p', { attempts: 1, timeoutMs: 7000, noFallback: true })).rejects.toThrow(/did not answer within 7 seconds/);
+  });
+});

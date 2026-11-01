@@ -63,7 +63,7 @@ export default async (req: Request) => {
 
     if (root === 'health' && id === 'gemini' && method === 'POST') {
       try {
-        const r = await geminiJson<{ ok: boolean }>(newMeter(), 'Return {"ok": true}', { attempts: 2 });
+        const r = await geminiJson<{ ok: boolean }>(newMeter(), 'Return {"ok": true}', { attempts: 1, timeoutMs: 7000, noFallback: true });
         return json({ ok: !!r.ok, model: GEMINI_MODEL() });
       } catch (e) {
         return json({ ok: false, error: e instanceof Error ? e.message : String(e) });

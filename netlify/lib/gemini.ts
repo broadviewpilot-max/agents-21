@@ -16,7 +16,7 @@ async function flashModels(key: string): Promise<string[]> {
   return (j.models ?? []).map((m) => m.name.replace(/^models\//, '')).filter((n) => /gemini/.test(n) && /flash/.test(n));
 }
 
-function post(model: string, key: string, prompt: string, urlContext: boolean) {
+function post(model: string, key: string, prompt: string, urlContext: boolean, timeoutMs = 50000) {
   return fetch(`${BASE}/models/${model}:generateContent`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
@@ -25,7 +25,11 @@ function post(model: string, key: string, prompt: string, urlContext: boolean) {
       tools: urlContext ? [{ url_context: {} }] : undefined,
       generationConfig: { temperature: 0, maxOutputTokens: 4000 },
     }),
-    signal: AbortSignal.timeout(50000),
+    signal: AbortSignal.timeout(timeoutMs),
+  }).catch((e: unknown) => {
+    const name = e instanceof Error ? e.name : '';
+    if (name === 'TimeoutError' || name === 'AbortError') throw new Error(`Gemini did not answer within ${Math.round(timeoutMs / 1000)} seconds (it may be overloaded). Try again in a few minutes.`);
+    throw e;
   });
 }
 
@@ -34,7 +38,7 @@ function post(model: string, key: string, prompt: string, urlContext: boolean) {
  * Retries transient errors on the primary model, then tries one or two other flash models
  * (GEMINI_FALLBACK_MODEL, or auto-picked from the account's model list) before giving up.
  */
-export async function geminiJson<T>(meter: Meter, prompt: string, opts: { urlContext?: boolean; attempts?: number } = {}): Promise<T> {
+export async function geminiJson<T>(meter: Meter, prompt: string, opts: { urlContext?: boolean; attempts?: number; timeoutMs?: number; noFallback?: boolean } = {}): Promise<T> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error('GEMINI_API_KEY is not set');
   const attempts = opts.attempts ?? 3;
@@ -43,17 +47,17 @@ export async function geminiJson<T>(meter: Meter, prompt: string, opts: { urlCon
   let res: Response | undefined;
   for (let i = 0; i < attempts; i++) {
     meter.geminiCalls++;
-    res = await post(primary, key, prompt, !!opts.urlContext);
+    res = await post(primary, key, prompt, !!opts.urlContext, opts.timeoutMs);
     if (res.ok || !RETRYABLE.has(res.status)) break;
     if (i < attempts - 1) await sleep(retryBaseMs() * (i + 1));
   }
 
-  if (res && !res.ok && RETRYABLE.has(res.status)) {
+  if (!opts.noFallback && res && !res.ok && RETRYABLE.has(res.status)) {
     const configured = process.env.GEMINI_FALLBACK_MODEL;
     const others = configured ? [configured] : (await flashModels(key).catch(() => [])).filter((n) => n !== primary).sort((a, b) => Number(/lite/.test(b)) - Number(/lite/.test(a))).slice(0, 2);
     for (const m of others) {
       meter.geminiCalls++;
-      const r = await post(m, key, prompt, !!opts.urlContext);
+      const r = await post(m, key, prompt, !!opts.urlContext, opts.timeoutMs);
       if (r.ok) { res = r; break; }
     }
   }
