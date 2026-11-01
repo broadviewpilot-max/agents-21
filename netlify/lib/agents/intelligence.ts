@@ -51,6 +51,7 @@ Social posts may only be used to raise "possiblePriorityShift"; they can never b
 Return JSON: {"websiteUrl": "the funder's OWN official website only, never a directory like Inside Philanthropy, Candid or ProPublica"|null, "summary": "2 sentences max", "priorities": Fact[], "eligibility": Fact[], "geography": Fact[], "awardRange": Fact[], "possiblePriorityShift": string|null}
 Fact = {"label": string, "value": string, "status": "confirmed"|"inferred"|"unknown", "sourceUrl": string|null}
 If the evidence has nothing for a section, return one Fact with status "unknown" saying so.
+EACH FACT MUST STATE ONE CHECKABLE CLAIM taken from ONE page. Do not combine a sourced fact with commentary about what is missing (for example, never write "Grants go to X; the specific list is not provided" as one confirmed fact). Put gaps in their own separate fact with status "unknown". Keep wording close to the source so a second reader can find it on the page.
 
 ${evidence}`,
   );
