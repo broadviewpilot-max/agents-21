@@ -1,19 +1,27 @@
 import type { Meter } from './claude.ts';
+import { getJson } from './store.ts';
 import { extractJson } from './util.ts';
 
 const BASE = 'https://generativelanguage.googleapis.com/v1beta';
 export const GEMINI_MODEL = () => process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+
+/** Model chosen on the Settings page (stored in the app), else the env var, else the default. */
+export async function activeModel(): Promise<string> {
+  const saved = await getJson<{ model?: string }>('config', 'gemini-model').catch(() => null);
+  return saved?.model || GEMINI_MODEL();
+}
 
 /** Transient Google-side errors worth retrying (overload, rate limit, brief outages). */
 const RETRYABLE = new Set([429, 500, 502, 503, 504]);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const retryBaseMs = () => Number(process.env.GEMINI_RETRY_MS ?? 1500);
 
-async function flashModels(key: string): Promise<string[]> {
-  const res = await fetch(`${BASE}/models?pageSize=100`, { headers: { 'x-goog-api-key': key }, signal: AbortSignal.timeout(15000) });
+/** Text-capable Gemini flash models available to this key (excludes live/image/audio variants). */
+export async function flashModels(key: string, timeoutMs = 15000): Promise<string[]> {
+  const res = await fetch(`${BASE}/models?pageSize=100`, { headers: { 'x-goog-api-key': key }, signal: AbortSignal.timeout(timeoutMs) });
   if (!res.ok) return [];
   const j = (await res.json()) as { models?: { name: string }[] };
-  return (j.models ?? []).map((m) => m.name.replace(/^models\//, '')).filter((n) => /gemini/.test(n) && /flash/.test(n));
+  return (j.models ?? []).map((m) => m.name.replace(/^models\//, '')).filter((n) => /gemini/.test(n) && /flash/.test(n) && !/(live|image|tts|audio|embedding|vision|robotics|computer)/.test(n));
 }
 
 function post(model: string, key: string, prompt: string, urlContext: boolean, timeoutMs = 50000) {
@@ -38,11 +46,11 @@ function post(model: string, key: string, prompt: string, urlContext: boolean, t
  * Retries transient errors on the primary model, then tries one or two other flash models
  * (GEMINI_FALLBACK_MODEL, or auto-picked from the account's model list) before giving up.
  */
-export async function geminiJson<T>(meter: Meter, prompt: string, opts: { urlContext?: boolean; attempts?: number; timeoutMs?: number; noFallback?: boolean } = {}): Promise<T> {
+export async function geminiJson<T>(meter: Meter, prompt: string, opts: { urlContext?: boolean; attempts?: number; timeoutMs?: number; noFallback?: boolean; model?: string } = {}): Promise<T> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error('GEMINI_API_KEY is not set');
   const attempts = opts.attempts ?? 3;
-  const primary = GEMINI_MODEL();
+  const primary = opts.model || (await activeModel());
 
   let res: Response | undefined;
   for (let i = 0; i < attempts; i++) {

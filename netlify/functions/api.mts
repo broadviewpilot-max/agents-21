@@ -4,7 +4,7 @@ import type { Brief, BriefState, Funder, FunderType, Program, Run, ScoringConfig
 import { buildIcs } from '../lib/ics.ts';
 import { loadPrograms, loadScoring } from '../lib/orchestrator.ts';
 import { askJson, newMeter } from '../lib/claude.ts';
-import { geminiJson, GEMINI_MODEL } from '../lib/gemini.ts';
+import { activeModel, flashModels, geminiJson } from '../lib/gemini.ts';
 import { creditBalance } from '../lib/sources/scrapecreators.ts';
 import { delKey, getJson, listJson, putJson } from '../lib/store.ts';
 import { authorized, isOpen, json, normalizeEin, normalizeUrl, uid } from '../lib/util.ts';
@@ -61,12 +61,26 @@ export default async (req: Request) => {
   try {
     if (root === 'session') return json({ ok: true, open: isOpen() });
 
+    if (root === 'health' && id === 'gemini-models' && method === 'GET') {
+      const key = process.env.GEMINI_API_KEY;
+      if (!key) return json({ models: [], current: await activeModel(), error: 'GEMINI_API_KEY is not set' });
+      return json({ models: await flashModels(key, 6000).catch(() => []), current: await activeModel() });
+    }
+    if (root === 'health' && id === 'gemini-model' && method === 'PUT') {
+      const { model } = (await req.json()) as { model?: string };
+      if (!model || !/^[a-z0-9][a-z0-9.\-]{2,60}$/.test(model)) return json({ error: 'Invalid model name' }, 400);
+      await putJson('config', 'gemini-model', { model });
+      return json({ ok: true, model });
+    }
     if (root === 'health' && id === 'gemini' && method === 'POST') {
+      const body = (await req.json().catch(() => ({}))) as { model?: string };
+      const model = body.model || (await activeModel());
+      const t0 = Date.now();
       try {
-        const r = await geminiJson<{ ok: boolean }>(newMeter(), 'Return {"ok": true}', { attempts: 1, timeoutMs: 7000, noFallback: true });
-        return json({ ok: !!r.ok, model: GEMINI_MODEL() });
+        const r = await geminiJson<{ ok: boolean }>(newMeter(), 'Return {"ok": true}', { attempts: 1, timeoutMs: 8000, noFallback: true, model });
+        return json({ ok: !!r.ok, model, ms: Date.now() - t0 });
       } catch (e) {
-        return json({ ok: false, error: e instanceof Error ? e.message : String(e) });
+        return json({ ok: false, model, ms: Date.now() - t0, error: e instanceof Error ? e.message : String(e) });
       }
     }
     if (root === 'health' && id === 'claude' && method === 'POST') {
@@ -85,7 +99,7 @@ export default async (req: Request) => {
         anthropicKey: !!process.env.ANTHROPIC_API_KEY,
         firecrawlKey: !!process.env.FIRECRAWL_API_KEY,
         geminiKey: !!process.env.GEMINI_API_KEY,
-        geminiModel: GEMINI_MODEL(),
+        geminiModel: await activeModel(),
         model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5',
         scCreditCapPerRun: Number(process.env.SC_MAX_CREDITS_PER_RUN || 15),
       });
