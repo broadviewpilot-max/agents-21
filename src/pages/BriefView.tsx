@@ -95,12 +95,17 @@ export default function BriefView({ briefId }: { briefId: string }) {
           if (!v) return null;
           if (!v.ran) return <div className="note noprint" style={{ marginTop: 10 }}>Second-model check not run: {v.skipped}</div>;
           const n = (k: string) => v.items.filter((c) => c.verdict === k).length;
+          const allUnchecked = v.items.length > 0 && n('cannot_access') === v.items.length;
+          const why = v.errors[0] ?? v.items.find((c) => c.note)?.note ?? 'Gemini returned no reason.';
           return (
+            <>
+            {allUnchecked && <div className="err noprint" style={{ marginTop: 10 }}><strong>Second-model check could not verify any claim.</strong> Reason: {why}</div>}
             <details className="vdetail noprint" style={{ marginTop: 10 }}>
               <summary>Second-model check (Gemini): {n('supported')} supported · {n('partial')} partial · {n('not_supported')} not supported · {n('cannot_access')} unchecked</summary>
               <ul>{v.items.map((c) => <li key={c.id}><VTag v={c} /> {c.text} <a className="src" href={c.sourceUrl} target="_blank" rel="noreferrer noopener">[src]</a>{(c.quote || c.note) && <div className="muted">{c.quote ? `“${c.quote}”` : c.note}</div>}</li>)}</ul>
               {v.errors.length > 0 && <div className="err">Verifier errors: {v.errors.join(' | ')}</div>}
             </details>
+            </>
           );
         })()}
         {run?.logs.some((l) => !l.ok) && (
