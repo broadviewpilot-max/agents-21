@@ -151,3 +151,34 @@ describe('narrative claim flags', () => {
     expect(narrativeClaimFlags('As an airline captain and check airman with 32+ years of flying, in my experience mentors help.')).toEqual([]);
   });
 });
+
+import { collectClaims, normalizeVerdict } from '../netlify/lib/agents/verifier.ts';
+import { verificationItems } from '../netlify/lib/guards.ts';
+describe('verifier helpers', () => {
+  it('collects only confirmed, sourced claims', () => {
+    const c = collectClaims(
+      { summary: '', signals: [], eligibility: [], geography: [], awardRange: [], priorities: [
+        { label: 'a', value: 'x', status: 'confirmed', sourceUrl: 'https://a.org/x' },
+        { label: 'b', value: 'y', status: 'inferred', sourceUrl: 'https://a.org/y' },
+        { label: 'c', value: 'z', status: 'confirmed' }] },
+      { note: '', deadlines: [
+        { label: 'LOI', date: '2027-03-01', kind: 'loi', status: 'confirmed', sourceUrl: 'https://a.org/x' },
+        { label: 'Rolling', kind: 'rolling', status: 'unknown' }] },
+    );
+    expect(c.map((x) => x.id)).toEqual(['priorities:0', 'deadline:0']);
+  });
+  it('requires a quote for "supported" and rejects unknown verdicts', () => {
+    expect(normalizeVerdict('supported', 'quote')).toBe('supported');
+    expect(normalizeVerdict('supported', '')).toBe('partial');
+    expect(normalizeVerdict('definitely', 'q')).toBe('cannot_access');
+  });
+  it('turns contradicted and partial claims into review items; ignores supported and unchecked', () => {
+    const items = verificationItems({ ran: true, errors: [], items: [
+      { id: 'a', kind: 'priorities', index: 0, text: 'ok', sourceUrl: 'u1', verdict: 'supported', quote: 'q' },
+      { id: 'b', kind: 'deadline', index: 0, text: 'LOI 2027', sourceUrl: 'u2', verdict: 'not_supported' },
+      { id: 'c', kind: 'priorities', index: 1, text: 'maybe', sourceUrl: 'u3', verdict: 'partial' },
+      { id: 'd', kind: 'priorities', index: 2, text: 'unread', sourceUrl: 'u4', verdict: 'cannot_access' }] });
+    expect(items).toHaveLength(2);
+    expect(verificationItems({ ran: false, skipped: 'x', items: [], errors: [] })).toEqual([]);
+  });
+});

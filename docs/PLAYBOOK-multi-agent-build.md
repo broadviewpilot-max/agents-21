@@ -86,3 +86,9 @@ Orchestrator (plain code): Intelligence → (Awards ∥ Deadlines) → Fit → N
 - `config/aimsir-profile.json`, `aimsir-programs.json`, `scoring.json`, `funders-seed.json`: confirmed org data and scoring weights.
 - `netlify/lib/agents/*`, `netlify/lib/guards.ts`, `netlify/lib/orchestrator.ts`: the agents and guardrails.
 - `test/*`: guardrail and mocked end-to-end tests (`npm test`).
+
+## 8. Google API evaluation (2026-10-29) for adding capability to the finished site
+- **Adopted:** Gemini API key (aistudio.google.com) as an independent *Verifier* agent: a second model family re-reads each cited page. Simple API key; URL context tool.
+- **Planned next:** Sign in with Google (public OAuth client ID + server-side email allowlist) to replace the shared password; then Calendar/Sheets via a service account shared with one calendar or sheet.
+- **Rejected:** Custom Search JSON API (closed to new customers; ends 2027-01-01); BigQuery `irs_990` public dataset (tables only 2012-2017, years stale); Maps/Geocoding (billing required, low value); Document AI (per-page cost; Firecrawl already parses PDFs); Gmail send (violates "nothing goes out").
+- **Rule of thumb:** API key = paste into Netlify; OAuth client ID = public, for sign-in; service account = robot account you share a calendar/sheet with.

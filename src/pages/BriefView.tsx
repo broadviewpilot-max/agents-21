@@ -1,12 +1,20 @@
 import { useEffect, useState } from 'react';
-import type { Brief, Fact, Funder, Run } from '../../shared/types.ts';
+import type { Brief, Fact, Funder, Run, VerifiedClaim } from '../../shared/types.ts';
 import { api, money, patch, post } from '../api.ts';
 import { DeadlineBadge } from './Pipeline.tsx';
 
 const Tag = ({ s }: { s: string }) => <span className={`stat-tag ${s}`}>{s === 'confirmed' ? 'CONF' : s === 'inferred' ? 'INFER' : 'UNK'}</span>;
 const Src = ({ u }: { u?: string }) => (u ? <a className="src" href={u} target="_blank" rel="noreferrer noopener"> [src]</a> : null);
-const Facts = ({ items }: { items?: Fact[] }) => (
-  <ul>{(items ?? []).slice(0, 4).map((f, i) => <li key={i}><Tag s={f.status} /><strong>{f.label}:</strong> {f.value}<Src u={f.sourceUrl} /></li>)}{!items?.length && <li>Not available</li>}</ul>
+const VTag = ({ v }: { v?: VerifiedClaim }) => {
+  if (!v) return null;
+  const t = v.quote ?? v.note ?? '';
+  if (v.verdict === 'supported') return <span className="vtag ok" title={`Second model agrees. ${t}`}>✓ 2nd</span>;
+  if (v.verdict === 'partial') return <span className="vtag warn" title={`Only partly supported. ${t}`}>~ 2nd</span>;
+  if (v.verdict === 'not_supported') return <span className="vtag bad" title={`Page does not support this. ${t}`}>✗ 2nd</span>;
+  return <span className="vtag na" title={v.note ?? 'Second model could not read the page'}>? 2nd</span>;
+};
+const Facts = ({ items, kind, vmap }: { items?: Fact[]; kind: string; vmap: Map<string, VerifiedClaim> }) => (
+  <ul>{(items ?? []).slice(0, 4).map((f, i) => <li key={i}><Tag s={f.status} /><VTag v={vmap.get(`${kind}:${i}`)} /><strong>{f.label}:</strong> {f.value}<Src u={f.sourceUrl} /></li>)}{!items?.length && <li>Not available</li>}</ul>
 );
 
 export default function BriefView({ briefId }: { briefId: string }) {
@@ -19,6 +27,7 @@ export default function BriefView({ briefId }: { briefId: string }) {
   if (!data) return <>{err ? <div className="err">{err}</div> : <p className="muted">Loading…</p>}</>;
   const { brief, run, funder } = data;
   const fit = run?.fit;
+  const vmap = new Map<string, VerifiedClaim>((run?.verification?.items ?? []).map((c) => [c.id, c]));
   const rec = fit?.recommendation;
   const recCls = rec === 'Pursue' ? 'green' : rec === 'Cultivate' ? 'amber' : 'red';
   const locked = brief.state === 'approved';
@@ -61,10 +70,10 @@ export default function BriefView({ briefId }: { briefId: string }) {
         </div>
 
         <div className="grid2">
-          <div className="panel blue"><h4>Priorities & eligibility</h4><p style={{ margin: '0 0 4px' }}>{run?.intelligence?.summary}</p><Facts items={run?.intelligence?.priorities} /><Facts items={run?.intelligence?.eligibility} />
+          <div className="panel blue"><h4>Priorities & eligibility</h4><p style={{ margin: '0 0 4px' }}>{run?.intelligence?.summary}</p><Facts items={run?.intelligence?.priorities} kind="priorities" vmap={vmap} /><Facts items={run?.intelligence?.eligibility} kind="eligibility" vmap={vmap} />
             {run?.intelligence?.possiblePriorityShift && <p><strong>Possible shift (social signal):</strong> {run.intelligence.possiblePriorityShift}</p>}</div>
           <div className="panel amber"><h4>Deadlines</h4>
-            <ul>{(run?.deadlines?.deadlines ?? []).slice(0, 6).map((d, i) => <li key={i}><Tag s={d.status} />{d.label} — {d.date ? <DeadlineBadge iso={d.date} /> : 'no date'}<Src u={d.sourceUrl} /></li>)}{!run?.deadlines?.deadlines.length && <li>Unconfirmed: verify with funder</li>}</ul>
+            <ul>{(run?.deadlines?.deadlines ?? []).slice(0, 6).map((d, i) => <li key={i}><Tag s={d.status} /><VTag v={vmap.get(`deadline:${i}`)} />{d.label} — {d.date ? <DeadlineBadge iso={d.date} /> : 'no date'}<Src u={d.sourceUrl} /></li>)}{!run?.deadlines?.deadlines.length && <li>Unconfirmed: verify with funder</li>}</ul>
             <div className="muted">{run?.deadlines?.note}</div></div>
           <div className="panel teal"><h4>Past awards</h4>
             {run?.awards && run.awards.stats.count > 0 ? <>
@@ -81,6 +90,19 @@ export default function BriefView({ briefId }: { briefId: string }) {
 
         <div className={`panel ${brief.openItems.length ? 'red' : 'green'}`} style={{ marginTop: 10 }}><h4>Verify before approval ({brief.openItems.length})</h4>
           <ul>{brief.openItems.map((i) => <li key={i}>{i} <button className="btn alt noprint" disabled={locked} onClick={() => save({ resolvedItems: [i] })}>Resolved</button></li>)}{!brief.openItems.length && <li>None outstanding</li>}</ul></div>
+        {(() => {
+          const v = run?.verification;
+          if (!v) return null;
+          if (!v.ran) return <div className="note noprint" style={{ marginTop: 10 }}>Second-model check not run: {v.skipped}</div>;
+          const n = (k: string) => v.items.filter((c) => c.verdict === k).length;
+          return (
+            <details className="vdetail noprint" style={{ marginTop: 10 }}>
+              <summary>Second-model check (Gemini): {n('supported')} supported · {n('partial')} partial · {n('not_supported')} not supported · {n('cannot_access')} unchecked</summary>
+              <ul>{v.items.map((c) => <li key={c.id}><VTag v={c} /> {c.text} <a className="src" href={c.sourceUrl} target="_blank" rel="noreferrer noopener">[src]</a>{(c.quote || c.note) && <div className="muted">{c.quote ? `“${c.quote}”` : c.note}</div>}</li>)}</ul>
+              {v.errors.length > 0 && <div className="err">Verifier errors: {v.errors.join(' | ')}</div>}
+            </details>
+          );
+        })()}
         {run?.logs.some((l) => !l.ok) && (
           <div className="panel red noprint" style={{ marginTop: 10 }}><h4>Agent errors (technical)</h4>
             <ul>{run.logs.filter((l) => !l.ok).map((l) => <li key={l.agent}><strong>{l.agent}:</strong> {l.note ?? 'unknown error'}</li>)}</ul></div>

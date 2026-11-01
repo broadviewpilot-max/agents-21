@@ -1,8 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { extractJson } from './util.ts';
 
-export interface Meter { scrapeCreators: number; firecrawl: number; claudeCalls: number }
-export const newMeter = (): Meter => ({ scrapeCreators: 0, firecrawl: 0, claudeCalls: 0 });
+export interface Meter { scrapeCreators: number; firecrawl: number; claudeCalls: number; geminiCalls: number }
+export const newMeter = (): Meter => ({ scrapeCreators: 0, firecrawl: 0, claudeCalls: 0, geminiCalls: 0 });
 
 let client: Anthropic | null = null;
 const getClient = () => (client ??= new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }));

@@ -41,10 +41,10 @@ export interface Funder {
 }
 export interface Run {
   id: string; funderId: string; status: 'queued' | 'running' | 'done' | 'failed';
-  startedAt: string; finishedAt?: string; error?: string; creditsUsed: { scrapeCreators: number; firecrawl: number; claudeCalls: number };
+  startedAt: string; finishedAt?: string; error?: string; creditsUsed: { scrapeCreators: number; firecrawl: number; claudeCalls: number; geminiCalls?: number };
   logs: AgentLog[];
   intelligence?: IntelligenceResult; awards?: AwardsResult; deadlines?: DeadlinesResult;
-  fit?: FitScore; narrative?: NarrativeSection[];
+  fit?: FitScore; narrative?: NarrativeSection[]; verification?: VerificationResult;
 }
 export interface Brief {
   id: string; funderId: string; runId: string; version: number; state: BriefState;
@@ -55,3 +55,8 @@ export interface Brief {
 
 export interface Program { id: string; name: string; status: 'draft' | 'confirmed'; summary: string; audience: string; geography: string; keywords: string[]; sources: string[] }
 export interface ScoringConfig { criteria: { id: string; label: string; weight: number; guide: string }[]; thresholds: { pursue: number; cultivate: number }; hardStopCap: number }
+
+export type ClaimKind = 'priorities' | 'eligibility' | 'geography' | 'awardRange' | 'deadline';
+export type Verdict = 'supported' | 'partial' | 'not_supported' | 'cannot_access';
+export interface VerifiedClaim { id: string; kind: ClaimKind; index: number; text: string; sourceUrl: string; verdict: Verdict; quote?: string; note?: string }
+export interface VerificationResult { ran: boolean; skipped?: string; items: VerifiedClaim[]; errors: string[] }

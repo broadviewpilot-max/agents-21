@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Funder, Run } from '../../shared/types.ts';
 import { api } from '../api.ts';
 
-const AGENTS = ['Funder Intelligence Analyst', 'Awards & 990 Analyst', 'Deadline & Pipeline Strategist', 'Fit Scoring Analyst', 'Narrative Drafter', 'Brief Editor'];
+const AGENTS = ['Funder Intelligence Analyst', 'Awards & 990 Analyst', 'Deadline & Pipeline Strategist', 'Fit Scoring Analyst', 'Narrative Drafter', 'Second-Model Verifier (Gemini)', 'Brief Editor'];
 
 export default function RunView({ runId }: { runId: string }) {
   const [run, setRun] = useState<Run | null>(null);
@@ -31,7 +31,7 @@ export default function RunView({ runId }: { runId: string }) {
     <>
       <h2>Research run</h2>
       {err && <div className="err">{err}</div>}
-      {run && <p className="muted">Status: <strong>{run.status}</strong> · Scrape Creators credits {run.creditsUsed.scrapeCreators} · Firecrawl calls {run.creditsUsed.firecrawl} · Claude calls {run.creditsUsed.claudeCalls}</p>}
+      {run && <p className="muted">Status: <strong>{run.status}</strong> · Scrape Creators credits {run.creditsUsed.scrapeCreators} · Firecrawl calls {run.creditsUsed.firecrawl} · Claude calls {run.creditsUsed.claudeCalls} · Gemini calls {run.creditsUsed.geminiCalls ?? 0}</p>}
       <div className="card"><table><tbody>
         {AGENTS.map((a) => {
           const l = run?.logs.find((x) => x.agent === a);

@@ -1,4 +1,4 @@
-import type { Award, AwardStats, CriterionScore, Deadline, Fact, FitScore, ScoringConfig, Status } from '../../shared/types.ts';
+import type { Award, AwardStats, CriterionScore, Deadline, Fact, FitScore, ScoringConfig, Status, VerificationResult } from '../../shared/types.ts';
 import { ISO_DATE } from './util.ts';
 
 const STATUSES: Status[] = ['confirmed', 'inferred', 'unknown'];
@@ -97,7 +97,7 @@ export function nextDeadline(deadlines: Deadline[] | undefined, today: string): 
 
 /** Items the reviewer must resolve before approval. */
 export function openItems(args: {
-  deadlines: Deadline[]; awardsCount: number; inferred: number; unsupported: string[]; claimFlags?: string[]; flags: string[]; ein?: string; missing: string[];
+  deadlines: Deadline[]; awardsCount: number; inferred: number; unsupported: string[]; claimFlags?: string[]; verificationItems?: string[]; flags: string[]; ein?: string; missing: string[];
 }): string[] {
   const items: string[] = [];
   for (const m of args.missing) items.push(`Agent did not complete: ${m}. Re-run or research manually.`);
@@ -107,6 +107,7 @@ export function openItems(args: {
   if (args.inferred > 0) items.push(`${args.inferred} priority/eligibility fact(s) are inferred rather than confirmed: verify against official guidelines.`);
   if (args.unsupported.length) items.push(`Narrative contains figures not found in source data (${args.unsupported.join(', ')}): replace with verified data or delete.`);
   for (const c of args.claimFlags ?? []) items.push(`Narrative ${c}.`);
+  for (const v of args.verificationItems ?? []) items.push(v);
   for (const f of args.flags.filter((x) => x.startsWith('HARD STOP'))) items.push(f);
   return items;
 }
@@ -122,4 +123,17 @@ export function narrativeClaimFlags(body: string): string[] {
   const over = body.match(OVERCLAIM);
   if (over) flags.push(`sweeping claim ("${over[0]}"): rephrase as "In my experience..." or replace with verified data`);
   return flags;
+}
+
+const short = (t: string, n = 110) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
+
+/** Review items from the second-model check: contradicted or only partly supported claims. */
+export function verificationItems(v?: VerificationResult): string[] {
+  if (!v?.ran) return [];
+  const out: string[] = [];
+  for (const c of v.items) {
+    if (c.verdict === 'not_supported') out.push(`Second-model check: the cited page does not support "${short(c.text)}" (${c.sourceUrl}). Verify or correct.`);
+    else if (c.verdict === 'partial') out.push(`Second-model check: only partly supported: "${short(c.text)}". Compare with ${c.sourceUrl}.`);
+  }
+  return out.slice(0, 8);
 }

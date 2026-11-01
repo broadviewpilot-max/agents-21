@@ -4,6 +4,7 @@ import type { Brief, BriefState, Funder, FunderType, Program, Run, ScoringConfig
 import { buildIcs } from '../lib/ics.ts';
 import { loadPrograms, loadScoring } from '../lib/orchestrator.ts';
 import { askJson, newMeter } from '../lib/claude.ts';
+import { geminiJson, GEMINI_MODEL } from '../lib/gemini.ts';
 import { creditBalance } from '../lib/sources/scrapecreators.ts';
 import { delKey, getJson, listJson, putJson } from '../lib/store.ts';
 import { authorized, isOpen, json, normalizeEin, normalizeUrl, uid } from '../lib/util.ts';
@@ -29,7 +30,7 @@ async function startRun(req: Request, funderId: string): Promise<Run | null> {
   if (todays >= cap) throw new Error(`Daily run limit reached (${cap}). Raise MAX_RUNS_PER_DAY or try tomorrow.`);
   const run: Run = {
     id: uid('run'), funderId, status: 'queued', startedAt: new Date().toISOString(),
-    creditsUsed: { scrapeCreators: 0, firecrawl: 0, claudeCalls: 0 }, logs: [],
+    creditsUsed: { scrapeCreators: 0, firecrawl: 0, claudeCalls: 0, geminiCalls: 0 }, logs: [],
   };
   await putJson('runs', run.id, run);
   // Fire the background function; it should answer 202 right away. If it does not, record why instead of leaving the run "queued" forever.
@@ -60,6 +61,14 @@ export default async (req: Request) => {
   try {
     if (root === 'session') return json({ ok: true, open: isOpen() });
 
+    if (root === 'health' && id === 'gemini' && method === 'POST') {
+      try {
+        const r = await geminiJson<{ ok: boolean }>(newMeter(), 'Return {"ok": true}');
+        return json({ ok: !!r.ok, model: GEMINI_MODEL() });
+      } catch (e) {
+        return json({ ok: false, error: e instanceof Error ? e.message : String(e) });
+      }
+    }
     if (root === 'health' && id === 'claude' && method === 'POST') {
       try {
         const r = await askJson<{ ok: boolean }>(newMeter(), 'Reply with JSON only.', 'Return {"ok": true}', 50);
@@ -75,6 +84,8 @@ export default async (req: Request) => {
         scrapeCreatorsCredits: await creditBalance(),
         anthropicKey: !!process.env.ANTHROPIC_API_KEY,
         firecrawlKey: !!process.env.FIRECRAWL_API_KEY,
+        geminiKey: !!process.env.GEMINI_API_KEY,
+        geminiModel: GEMINI_MODEL(),
         model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5',
         scCreditCapPerRun: Number(process.env.SC_MAX_CREDITS_PER_RUN || 15),
       });

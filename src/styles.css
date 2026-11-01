@@ -71,6 +71,9 @@ th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line
 .stat-tag { font-size: .7em; font-weight: 700; border-radius: 4px; padding: 0 4px; margin-right: 4px; }
 .stat-tag.confirmed { background: var(--green-bar); color: #fff; } .stat-tag.inferred { background: var(--amber-bar); color: #fff; } .stat-tag.unknown { background: var(--gray-bar); color: #fff; }
 .narr h5 { margin: 6px 0 2px; font-size: .85rem; } .narr p { margin: 0 0 6px; white-space: pre-wrap; font-size: .9em; }
+.vtag { font-size: .7em; font-weight: 700; border-radius: 4px; padding: 0 4px; margin-right: 4px; cursor: help; border: 1px solid currentColor; }
+.vtag.ok { color: var(--green-bar); } .vtag.warn { color: var(--amber-bar); } .vtag.bad { color: var(--red-bar); } .vtag.na { color: var(--gray-bar); }
+details.vdetail summary { cursor: pointer; font-weight: 600; } details.vdetail li { margin-bottom: 4px; }
 @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
 
 

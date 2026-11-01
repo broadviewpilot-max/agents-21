@@ -7,7 +7,7 @@ Docs: [`docs/PRD.md`](docs/PRD.md) · [`docs/AGENTS.md`](docs/AGENTS.md)
 ## What it does
 Priorities · deadlines · past awards · fit score vs. Aimsir programs · first-draft narrative sections · deadline pipeline (+ `.ics` calendar download).
 
-Agents: Funder Intelligence → (Awards & 990 ∥ Deadlines) → Fit Scoring → Narrative Drafter / Brief Editor. Every "confirmed" fact must cite a URL the agent actually saw; otherwise it is downgraded to "inferred". Awards without a traceable source are dropped. Figures in drafts that are not in Aimsir's source data are flagged in the brief's "Verify" list. Approval is blocked while open items remain unless an override note is recorded.
+Agents: Funder Intelligence → (Awards & 990 ∥ Deadlines) → Fit Scoring → (Narrative Drafter ∥ Gemini Verifier) → Brief Editor. Every "confirmed" fact must cite a URL the agent actually saw; otherwise it is downgraded to "inferred". Awards without a traceable source are dropped. Figures in drafts that are not in Aimsir's source data are flagged in the brief's "Verify" list. Approval is blocked while open items remain unless an override note is recorded.
 
 ## Deploy (Netlify)
 1. Netlify > Add new site > Import from GitHub > this repo, branch `main`. Build settings come from `netlify.toml`.
@@ -18,6 +18,8 @@ Agents: Funder Intelligence → (Awards & 990 ∥ Deadlines) → Fit Scoring →
    | `MAX_RUNS_PER_DAY` | no | Default 25. Cost guard on research runs. |
    | `SCRAPECREATORS_API_KEY` | yes | Google search + LinkedIn signals. |
    | `ANTHROPIC_API_KEY` | yes | Powers the agents. Create at platform.claude.com/settings/keys (API billing is separate from a Claude subscription). |
+   | `GEMINI_API_KEY` | no (recommended) | Enables the Verifier agent: Gemini re-reads each cited source page and tags every CONF claim ✓ / ~ / ✗. Create at aistudio.google.com. |
+   | `GEMINI_MODEL` | no | Default `gemini-3.8-flash`. If the Test Gemini button says the model is not found, it lists valid names. |
    | `FIRECRAWL_API_KEY` | no | Better page reading; falls back to plain fetch. |
    | `ANTHROPIC_MODEL` | no | Default `claude-sonnet-5-5`. |
    | `SC_MAX_CREDITS_PER_RUN` | no | Default 15. |

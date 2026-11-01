@@ -6,8 +6,9 @@ import { runEditor } from './agents/editor.ts';
 import { runFit } from './agents/fit.ts';
 import { runIntelligence } from './agents/intelligence.ts';
 import { runNarrative } from './agents/narrative.ts';
+import { runVerifier } from './agents/verifier.ts';
 import { newMeter } from './claude.ts';
-import { nextDeadline, openItems } from './guards.ts';
+import { nextDeadline, openItems, verificationItems } from './guards.ts';
 import defaultPrograms from '../../config/aimsir-programs.json';
 import defaultScoring from '../../config/scoring.json';
 import { getJson, putJson } from './store.ts';
@@ -67,14 +68,18 @@ export async function runPipeline(runId: string): Promise<void> {
     run.fit = await step('Fit Scoring Analyst', () => runFit(ctx, { intelligence: run.intelligence, awards, deadlines }, programs, scoring));
     await save();
 
-    const narr = await step('Narrative Drafter', () => runNarrative(ctx, run.intelligence, run.fit, programs));
+    const [narr, verification] = await Promise.all([
+      step('Narrative Drafter', () => runNarrative(ctx, run.intelligence, run.fit, programs)),
+      step('Second-Model Verifier (Gemini)', () => runVerifier(ctx, { intelligence: run.intelligence, deadlines })),
+    ]);
     run.narrative = narr?.sections;
+    run.verification = verification;
 
     const missing = run.logs.filter((l) => !l.ok).map((l) => l.agent);
     const inferred = [...(run.intelligence?.priorities ?? []), ...(run.intelligence?.eligibility ?? [])].filter((f) => f.status !== 'confirmed').length;
     const items = openItems({
       deadlines: deadlines?.deadlines ?? [], awardsCount: awards?.awards.length ?? 0, inferred,
-      unsupported: narr?.unsupported ?? [], claimFlags: narr?.claimFlags ?? [], flags: run.fit?.flags ?? [], ein: awards?.ein, missing,
+      unsupported: narr?.unsupported ?? [], claimFlags: narr?.claimFlags ?? [], verificationItems: verificationItems(verification), flags: run.fit?.flags ?? [], ein: awards?.ein, missing,
     });
     const next = nextDeadline(deadlines?.deadlines, ctx.today);
     const headline = await step('Brief Editor', () => runEditor(ctx, run.fit, next, items.length));

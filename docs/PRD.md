@@ -138,3 +138,5 @@ Briefs cannot be marked Approved while any "Verify" item is unresolved unless Se
 - Found during research: IRS/ProPublica lists "Aimsir Foundation" (EIN 33-2801792, Lauderhill FL, NTEE B82) with no 990 filings shown. Funders check this; confirm entity and filing status. **[Open]**
 
 **v1.2 — 2026-10-22:** Password gate made optional at Sean's request (time-boxed launch). With `APP_PASSWORD` unset the app runs in open mode with a visible banner; a `MAX_RUNS_PER_DAY` cap (default 25) bounds cost. **[Open: Sean to set APP_PASSWORD later]**
+
+**v1.3 — 2026-11-01:** Added Agent 6, the Second-Model Verifier (Gemini API key, URL context tool). It only flags: it never edits facts or scores. Optional: without `GEMINI_API_KEY` the brief says the check was not run. Rejected Google options (with reasons) are recorded in the playbook.

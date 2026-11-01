@@ -1,6 +1,6 @@
 # Sub-Agent Roster — Aimsir Funder Command Center
 
-Five expert agents plus a code-level orchestrator. Each returns schema-validated JSON; every fact carries `status` (confirmed / inferred / unknown) and `source_url`. Agents never invent data; unknowns stay unknown.
+Six expert agents plus a code-level orchestrator. Each returns schema-validated JSON; every fact carries `status` (confirmed / inferred / unknown) and `source_url`. Agents never invent data; unknowns stay unknown.
 
 | # | Agent | Expertise | Owns | Primary tools |
 |---|---|---|---|---|
@@ -10,7 +10,9 @@ Five expert agents plus a code-level orchestrator. Each returns schema-validated
 | 4 | **Fit Scoring Analyst** | Mission-alignment & portfolio strategy | 0–100 score, rationale, hard-stop flags, Pursue/Cultivate/Pass | `config/aimsir-programs.json`, `config/scoring.json`, outputs of 1–3 |
 | 5 | **Narrative Drafter & Brief Editor** | Aviation-nonprofit grant writing; one-page editorial discipline | First-draft sections, the one-page brief, open-items list, QA (no unsourced claims) | `config/aimsir-profile.json`, outputs of 1–4, Claude |
 
-**Orchestrator (code, not an LLM):** runs 1 → (2 ∥ 3) → 4 → 5, enforces credit caps, stamps retrieval times, retries once on tool failure, and writes the Run record.
+| 6 | **Second-Model Verifier** | Independent fact-checking (Gemini, a different model family) | ✓/~/✗ tag on every CONF claim; mismatches added to the Verify list | Gemini API with URL context |
+
+**Orchestrator (code, not an LLM):** runs 1 → (2 ∥ 3) → 4 → (5a ∥ 6) → 5b, enforces credit caps, stamps retrieval times, retries once on tool failure, and writes the Run record.
 
 **Guardrails common to all agents**
 - Aimsir facts come only from the config files; anything else is `[INSERT VERIFIED DATA]`.

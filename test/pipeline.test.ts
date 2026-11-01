@@ -11,7 +11,7 @@ vi.mock('../netlify/lib/store.ts', () => ({
 
 // Scripted model: returns canned JSON keyed by which agent is asking (system prompt content).
 vi.mock('../netlify/lib/claude.ts', () => ({
-  newMeter: () => ({ scrapeCreators: 0, firecrawl: 0, claudeCalls: 0 }),
+  newMeter: () => ({ scrapeCreators: 0, firecrawl: 0, claudeCalls: 0, geminiCalls: 0 }),
   askJson: async (meter: { claudeCalls: number }, system: string) => {
     meter.claudeCalls++;
     if (system.includes('philanthropy research analyst'))
@@ -36,6 +36,13 @@ vi.mock('../netlify/lib/claude.ts', () => ({
   },
 }));
 
+vi.mock('../netlify/lib/gemini.ts', () => ({
+  GEMINI_MODEL: () => 'gemini-test',
+  geminiJson: async (meter: { geminiCalls: number }) => {
+    meter.geminiCalls++;
+    return { results: [{ id: 'priorities:0', verdict: 'supported', quote: 'We fund STEM education for youth.' }, { id: 'deadline:0', verdict: 'not_supported', note: 'Page lists a different date.' }] };
+  },
+}));
 vi.mock('../netlify/lib/sources/scrapecreators.ts', () => ({
   googleSearch: async () => [{ url: 'https://funder.example/guidelines', title: 'Guidelines', description: 'Funding priorities' }],
   linkedinCompanyPosts: async () => [],
@@ -47,7 +54,7 @@ vi.mock('../netlify/lib/sources/grantsgov.ts', () => ({ searchOpportunities: asy
 import { runPipeline } from '../netlify/lib/orchestrator.ts';
 
 describe('pipeline end-to-end (mocked IO)', () => {
-  beforeEach(() => db.clear());
+  beforeEach(() => { db.clear(); process.env.GEMINI_API_KEY = 'test-key'; });
 
   it('produces a guarded brief: downgrades uncited facts, drops untraceable awards, flags invented numbers', async () => {
     const funder: Funder = { id: 'f1', name: 'Example Foundation', type: 'private-foundation', createdAt: 'now', stage: 'researching' };
@@ -73,5 +80,23 @@ describe('pipeline end-to-end (mocked IO)', () => {
     expect(brief.openItems.some((i) => i.includes('4,000'))).toBe(true); // invented figure flagged
     expect(brief.openItems.some((i) => i.includes('inferred'))).toBe(true);
     expect(brief.narrative).toHaveLength(4);
+
+    // Second-model verifier: supported claim tagged, contradicted deadline surfaces as a verify item.
+    expect(run.verification?.ran).toBe(true);
+    expect(run.verification!.items.find((c) => c.id === 'priorities:0')?.verdict).toBe('supported');
+    expect(run.verification!.items.find((c) => c.id === 'deadline:0')?.verdict).toBe('not_supported');
+    expect(brief.openItems.some((i) => i.startsWith('Second-model check') && i.includes('LOI'))).toBe(true);
+    expect(run.creditsUsed.geminiCalls).toBeGreaterThan(0);
+  });
+
+  it('skips the verifier cleanly when no Gemini key is set', async () => {
+    delete process.env.GEMINI_API_KEY;
+    db.set('funders/f2', { id: 'f2', name: 'Example Foundation', type: 'private-foundation', createdAt: 'now', stage: 'researching' } satisfies Funder);
+    db.set('runs/r2', { id: 'r2', funderId: 'f2', status: 'queued', startedAt: 'now', creditsUsed: { scrapeCreators: 0, firecrawl: 0, claudeCalls: 0 }, logs: [] } satisfies Run);
+    await runPipeline('r2');
+    const run = db.get('runs/r2') as Run;
+    expect(run.status).toBe('done');
+    expect(run.verification?.ran).toBe(false);
+    expect(run.verification?.skipped).toContain('GEMINI_API_KEY');
   });
 });
