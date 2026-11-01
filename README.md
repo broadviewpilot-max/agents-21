@@ -14,7 +14,9 @@ Agents: Funder Intelligence → (Awards & 990 ∥ Deadlines) → Fit Scoring →
 2. Site configuration > Environment variables (see `.env.example`):
    | Variable | Required | Notes |
    |---|---|---|
-   | `APP_PASSWORD` | no (for now) | Unset = **open mode**: anyone with the URL can use the app and spend your API credits. Set it later to enable the login gate. |
+   | `GOOGLE_CLIENT_ID` | no (recommended) | Turns on **Sign in with Google**. A public ID, not a secret. See "Google sign-in setup" below. |
+   | `ALLOWED_EMAILS` | with Google | Comma-separated emails allowed in. Required when `GOOGLE_CLIENT_ID` is set; if empty, nobody can sign in. |
+   | `APP_PASSWORD` | no | Optional backup login. With neither Google nor a password set, the site is in **open mode** (anyone with the URL can use it and spend your API credits). |
    | `MAX_RUNS_PER_DAY` | no | Default 25. Cost guard on research runs. |
    | `SCRAPECREATORS_API_KEY` | yes | Google search + LinkedIn signals. |
    | `ANTHROPIC_API_KEY` | yes | Powers the agents. Create at platform.claude.com/settings/keys (API billing is separate from a Claude subscription). |
@@ -41,3 +43,13 @@ npm run build     # typecheck + vite build
 npx netlify dev   # local site + functions (needs env vars)
 ```
 Storage is Netlify Blobs. Programs and scoring weights seed from `config/` and are editable in the app.
+
+## Google sign-in setup (one time, about 10 minutes)
+1. Go to console.cloud.google.com, sign in, and create a project (for example "Aimsir Funder Center"). Menu names change; search the console for "Credentials" if you cannot find an item.
+2. Open **APIs & Services > OAuth consent screen** (newer consoles call it **Google Auth Platform**). Choose **External**, enter an app name and your support email, and save. Add your own Gmail address under **Test users** (leaving the app in "Testing" is fine for one user).
+3. Open **Credentials > Create credentials > OAuth client ID**. Application type: **Web application**. Under **Authorized JavaScript origins**, add your site address exactly, for example `https://regal-mochi-8156ad.netlify.app` (no trailing slash, no path). No redirect URI is needed.
+4. Copy the **Client ID**.
+5. In Netlify > Site configuration > Environment variables, add `GOOGLE_CLIENT_ID` (the Client ID) and `ALLOWED_EMAILS` (your Gmail address). Redeploy.
+6. Open the site: you will see a **Sign in with Google** button. Settings should show Access: `google`.
+
+How it works: the browser gets a signed Google ID token; the server verifies its signature, issuer, audience and expiry, requires a verified email on `ALLOWED_EMAILS`, then issues its own 12-hour session token signed with a random server-side secret. Removing an email from `ALLOWED_EMAILS` revokes that person's sessions. Keep `APP_PASSWORD` set as a backup until Google sign-in works, then remove it.

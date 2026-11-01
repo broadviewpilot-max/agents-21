@@ -7,7 +7,8 @@ import { askJson, newMeter } from '../lib/claude.ts';
 import { activeModel, flashModels, geminiJson } from '../lib/gemini.ts';
 import { creditBalance } from '../lib/sources/scrapecreators.ts';
 import { delKey, getJson, listJson, putJson } from '../lib/store.ts';
-import { authorized, isOpen, json, normalizeEin, normalizeUrl, uid } from '../lib/util.ts';
+import { accessMode, allowedEmails, authenticate, googleClientId, issueSession, verifyGoogleCredential } from '../lib/auth.ts';
+import { json, normalizeEin, normalizeUrl, uid } from '../lib/util.ts';
 
 export const config: Config = { path: '/api/*' };
 
@@ -37,7 +38,7 @@ async function startRun(req: Request, funderId: string): Promise<Run | null> {
   try {
     const res = await fetch(new URL('/.netlify/functions/run-background', req.url), {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-app-password': req.headers.get('x-app-password') ?? '' },
+      headers: { 'content-type': 'application/json', 'x-app-password': req.headers.get('x-app-password') ?? '', authorization: req.headers.get('authorization') ?? '' },
       body: JSON.stringify({ runId: run.id }),
     });
     if (!res.ok) throw new Error(`Background function answered HTTP ${res.status}${res.status === 404 ? ' (function not deployed?)' : res.status === 401 ? ' (unauthorized: either the Netlify project is set to Private, which blocks server-to-server calls; click Make public in Netlify, or the APP_PASSWORD did not match)' : ''}`);
@@ -56,10 +57,29 @@ export default async (req: Request) => {
   const [root, id, sub] = seg;
   const method = req.method;
 
-  if (!authorized(req)) return json({ error: 'Unauthorized' }, 401);
+  // Public endpoints: the login screen needs these before anyone is signed in.
+  if (root === 'config' && method === 'GET') {
+    const mode = accessMode();
+    return json({ mode, googleClientId: googleClientId() || undefined, googleReady: !mode.includes('google') || allowedEmails().length > 0 });
+  }
+  if (root === 'auth' && id === 'google' && method === 'POST') {
+    if (!googleClientId()) return json({ error: 'Google sign-in is not configured on this site.' }, 400);
+    try {
+      const { credential } = (await req.json()) as { credential?: string };
+      if (!credential) return json({ error: 'Missing Google credential' }, 400);
+      const email = await verifyGoogleCredential(credential);
+      const s = await issueSession(email);
+      return json({ token: s.token, email, expiresAt: s.expiresAt });
+    } catch (e) {
+      return json({ error: e instanceof Error ? e.message : 'Google sign-in failed' }, 401);
+    }
+  }
+
+  const auth = await authenticate(req);
+  if (!auth.ok) return json({ error: 'Unauthorized' }, 401);
 
   try {
-    if (root === 'session') return json({ ok: true, open: isOpen() });
+    if (root === 'session') return json({ ok: true, open: accessMode() === 'open', mode: accessMode(), email: auth.email });
 
     if (root === 'health' && id === 'gemini-models' && method === 'GET') {
       const key = process.env.GEMINI_API_KEY;
@@ -93,7 +113,9 @@ export default async (req: Request) => {
     }
     if (root === 'health') {
       return json({
-        open: isOpen(),
+        open: accessMode() === 'open',
+        access: accessMode(),
+        accountEmail: auth.email,
         scrapeCreatorsKey: !!process.env.SCRAPECREATORS_API_KEY,
         scrapeCreatorsCredits: await creditBalance(),
         anthropicKey: !!process.env.ANTHROPIC_API_KEY,

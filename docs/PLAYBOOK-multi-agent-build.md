@@ -92,3 +92,10 @@ Orchestrator (plain code): Intelligence → (Awards ∥ Deadlines) → Fit → N
 - **Planned next:** Sign in with Google (public OAuth client ID + server-side email allowlist) to replace the shared password; then Calendar/Sheets via a service account shared with one calendar or sheet.
 - **Rejected:** Custom Search JSON API (closed to new customers; ends 2027-01-01); BigQuery `irs_990` public dataset (tables only 2012-2017, years stale); Maps/Geocoding (billing required, low value); Document AI (per-page cost; Firecrawl already parses PDFs); Gmail send (violates "nothing goes out").
 - **Rule of thumb:** API key = paste into Netlify; OAuth client ID = public, for sign-in; service account = robot account you share a calendar/sheet with.
+
+## 9. Lessons from adding Gemini and Google sign-in (2026-11-01)
+- **[Lesson]** Synchronous Netlify functions die at ~10 seconds. Any "Test" button must be one fast attempt (<=8s); long work belongs in the background function. Show a readable message when the server times out (HTTP 502/504), never a blank.
+- **[Lesson]** Hosted models return 503 "high demand" and time out. Build in retries, a backup model, and an in-app model picker (store the choice server-side) so a non-technical owner never edits env vars.
+- **[Lesson]** A second model that only *flags* (never edits) is the right design. Make the first model write one checkable claim per fact, or the checker will score mixed sentences "partial".
+- **[Lesson]** Sign in with Google needs a public OAuth client ID, not a secret API key. Verify the ID token server-side (signature, issuer, audience, expiry, `email_verified`), allowlist emails, and issue your own short session token signed with a random secret stored server-side (never derived from public values).
+- **[Lesson]** Keep the old password as a temporary backup until the new login is proven.
