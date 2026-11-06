@@ -13,7 +13,7 @@ const useHash = () => {
   return h.replace(/^#/, '');
 };
 
-interface AuthConfig { mode: 'open' | 'password' | 'google' | 'google+password'; googleClientId?: string; googleReady: boolean }
+interface AuthConfig { mode: 'open' | 'password' | 'google' | 'google+password'; googleClientId?: string; facebook?: { url: string }; googleReady: boolean }
 declare global { interface Window { google?: { accounts: { id: { initialize: (o: unknown) => void; renderButton: (el: HTMLElement, o: unknown) => void; disableAutoSelect?: () => void } } } } }
 
 function GoogleButton({ clientId, onCredential }: { clientId: string; onCredential: (c: string) => void }) {
@@ -35,11 +35,41 @@ function GoogleButton({ clientId, onCredential }: { clientId: string; onCredenti
   return <div ref={ref} style={{ minHeight: 44 }} />;
 }
 
+/* Facebook sign-in is brokered by Supabase: we send the browser to Supabase, Facebook asks for consent, and Supabase sends the
+   browser back here with a short-lived token in the URL hash. Read it once, scrub it from the address bar, then exchange it with our
+   own server (which re-verifies it and applies the allowlist). The Supabase token is never stored. */
+interface OAuthReturn { accessToken?: string; error?: string }
+function takeOAuthReturn(): OAuthReturn | null {
+  const fromHash = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const fromQuery = new URLSearchParams(location.search);
+  const accessToken = fromHash.get('access_token') ?? undefined;
+  const error = fromHash.get('error_description') ?? fromQuery.get('error_description') ?? fromHash.get('error') ?? fromQuery.get('error') ?? undefined;
+  if (!accessToken && !error) return null;
+  history.replaceState(null, '', `${location.pathname}#/`);
+  return { accessToken, error: error?.replace(/\+/g, ' ') };
+}
+const oauthReturn = takeOAuthReturn();
+
+function startFacebook(supabaseUrl: string) {
+  const redirect = encodeURIComponent(`${location.origin}/`);
+  location.assign(`${supabaseUrl}/auth/v1/authorize?provider=facebook&scopes=email&redirect_to=${redirect}`);
+}
+
 function Login({ onOk }: { onOk: () => void }) {
   const [cfg, setCfg] = useState<AuthConfig | null>(null);
   const [pw, setLocal] = useState('');
   const [err, setErr] = useState('');
+  const exchanged = useRef(false);
   useEffect(() => { fetch('/api/config').then((r) => r.json()).then(setCfg).catch(() => setErr('Could not reach the server.')); }, []);
+  useEffect(() => {
+    if (exchanged.current || !oauthReturn) return;
+    exchanged.current = true;
+    if (oauthReturn.accessToken) {
+      post<{ token: string }>('auth/facebook', { accessToken: oauthReturn.accessToken })
+        .then((r) => { setToken(r.token); onOk(); })
+        .catch((e: Error) => setErr(e.message || 'Facebook sign-in failed.'));
+    } else setErr(`Sign-in was not completed: ${oauthReturn.error}`);
+  }, []);
 
   async function withPassword(e: React.FormEvent) {
     e.preventDefault();
@@ -59,9 +89,14 @@ function Login({ onOk }: { onOk: () => void }) {
     <div className="card login">
       <h2>Aimsir Funder Command Center</h2>
       <p className="muted">Private workspace. Nothing here sends or submits anything.</p>
-      {cfg?.mode.includes('google') && cfg.googleClientId && (cfg.googleReady
-        ? <GoogleButton clientId={cfg.googleClientId} onCredential={withGoogle} />
-        : <div className="err">Google sign-in is on, but no allowed email is set. Add ALLOWED_EMAILS in Netlify.</div>)}
+      {cfg?.mode.includes('google') && !cfg.googleReady && <div className="err">Sign-in is on, but no allowed email is set. Add ALLOWED_EMAILS in Netlify.</div>}
+      {cfg?.mode.includes('google') && cfg.googleReady && cfg.googleClientId && <GoogleButton clientId={cfg.googleClientId} onCredential={withGoogle} />}
+      {cfg?.mode.includes('google') && cfg.googleReady && cfg.facebook && (
+        <p style={{ margin: '12px 0 0' }}>
+          <button type="button" className="btn" onClick={() => startFacebook(cfg.facebook!.url)}
+            style={{ width: 280, background: '#1877F2', color: '#fff', border: 0, minHeight: 40, fontWeight: 600 }}>Continue with Facebook</button>
+        </p>
+      )}
       {cfg?.mode.includes('password') && (
         <form onSubmit={withPassword} style={{ marginTop: 12 }}>
           {cfg.mode.includes('google') && <p className="muted">Or use the backup password:</p>}

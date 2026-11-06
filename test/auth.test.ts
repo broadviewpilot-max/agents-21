@@ -15,7 +15,7 @@ vi.mock('jose', async (orig) => {
 });
 (globalThis as unknown as { __k: unknown }).__k = keys.publicKey;
 
-import { accessMode, authenticate, issueSession, readSession, verifyGoogleCredential } from '../netlify/lib/auth.ts';
+import { accessMode, authenticate, facebookEnabled, issueSession, readSession, resetFacebookCache, verifyFacebookSession, verifyGoogleCredential } from '../netlify/lib/auth.ts';
 
 const CLIENT = 'client-123.apps.googleusercontent.com';
 const req = (h: Record<string, string> = {}) => new Request('https://x/api/funders', { headers: h });
@@ -25,7 +25,7 @@ const idToken = (o: { aud?: string; email?: string; verified?: boolean; iss?: st
     .setIssuedAt().setExpirationTime(o.exp ?? '10m').sign(keys.privateKey);
 
 function env(e: Record<string, string | undefined>) {
-  for (const k of ['GOOGLE_CLIENT_ID', 'ALLOWED_EMAILS', 'APP_PASSWORD']) delete process.env[k];
+  for (const k of ['GOOGLE_CLIENT_ID', 'ALLOWED_EMAILS', 'APP_PASSWORD', 'SUPABASE_URL', 'SUPABASE_PUBLISHABLE_KEY']) delete process.env[k];
   for (const [k, v] of Object.entries(e)) if (v !== undefined) process.env[k] = v;
 }
 
@@ -108,5 +108,78 @@ describe('Google ID token verification', () => {
     const bad = await new SignJWT({ email: 'sean@example.com', email_verified: true }).setProtectedHeader({ alg: 'RS256' })
       .setIssuer('https://accounts.google.com').setAudience(CLIENT).setExpirationTime('10m').sign(other.privateKey);
     await expect(verifyGoogleCredential(bad)).rejects.toThrow();
+  });
+});
+
+
+describe('Facebook sign-in (via Supabase)', () => {
+  const SB = 'https://proj.supabase.co';
+  const fbUser = (o: { identityEmail?: string; confirmed?: string | null; verified?: boolean; provider?: string; primary?: string } = {}) => ({
+    email: o.primary ?? 'sean@example.com',
+    email_confirmed_at: o.confirmed === undefined ? '2026-11-06T00:00:00Z' : o.confirmed,
+    identities: [{ provider: o.provider ?? 'facebook', identity_data: { email: o.identityEmail ?? 'sean@example.com', ...(o.verified === undefined ? {} : { email_verified: o.verified }) } }],
+  });
+  const stubFetch = (body: unknown, ok = true) => {
+    const f = vi.fn(async () => ({ ok, status: ok ? 200 : 401, json: async () => body }) as unknown as Response);
+    vi.stubGlobal('fetch', f);
+    return f;
+  };
+  beforeEach(() => { db.clear(); resetFacebookCache(); env({ ALLOWED_EMAILS: 'sean@example.com', SUPABASE_URL: SB + '/', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test' }); });
+  afterEach(() => { env({}); vi.unstubAllGlobals(); });
+
+  it('accepts an allowed, confirmed Facebook identity and asks Supabase to validate the token', async () => {
+    const f = stubFetch(fbUser());
+    expect(await verifyFacebookSession('tok-123')).toBe('sean@example.com');
+    const [url, init] = f.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe(`${SB}/auth/v1/user`);
+    expect(init.headers).toMatchObject({ apikey: 'sb_publishable_test', authorization: 'Bearer tok-123' });
+  });
+  it('lowercases the email and still matches the allowlist', async () => {
+    stubFetch(fbUser({ identityEmail: 'Sean@Example.com' }));
+    expect(await verifyFacebookSession('t')).toBe('sean@example.com');
+  });
+  it('rejects an email that is not on the allowlist', async () => {
+    stubFetch(fbUser({ identityEmail: 'stranger@example.com', primary: 'stranger@example.com' }));
+    await expect(verifyFacebookSession('t')).rejects.toThrow(/not on the allowed list/);
+  });
+  it('rejects a sign-in that has no Facebook identity (e.g. a password sign-up using an allowed address)', async () => {
+    stubFetch(fbUser({ provider: 'email' }));
+    await expect(verifyFacebookSession('t')).rejects.toThrow(/did not come from Facebook/);
+  });
+  it('trusts the Facebook identity email, not the account primary email', async () => {
+    stubFetch(fbUser({ primary: 'sean@example.com', identityEmail: 'attacker@example.com' }));
+    await expect(verifyFacebookSession('t')).rejects.toThrow(/not on the allowed list/);
+  });
+  it('rejects unconfirmed or explicitly unverified emails', async () => {
+    stubFetch(fbUser({ confirmed: null }));
+    await expect(verifyFacebookSession('t')).rejects.toThrow(/not verified/);
+    stubFetch(fbUser({ verified: false }));
+    await expect(verifyFacebookSession('t')).rejects.toThrow(/not verified/);
+  });
+  it('rejects when Facebook shares no email', async () => {
+    stubFetch(fbUser({ identityEmail: '' }));
+    await expect(verifyFacebookSession('t')).rejects.toThrow(/did not share an email/);
+  });
+  it('rejects tokens Supabase refuses, and when not configured', async () => {
+    stubFetch({ msg: 'invalid JWT' }, false);
+    await expect(verifyFacebookSession('bad')).rejects.toThrow(/could not be verified/);
+    env({ ALLOWED_EMAILS: 'sean@example.com' });
+    await expect(verifyFacebookSession('t')).rejects.toThrow(/not configured/);
+  });
+  it('facebook-only configuration is never "open": anonymous requests are rejected', async () => {
+    expect(accessMode()).toBe('google');
+    expect((await authenticate(req())).ok).toBe(false);
+    const { token } = await issueSession('sean@example.com');
+    expect((await authenticate(req({ authorization: `Bearer ${token}` }))).ok).toBe(true);
+  });
+  it('shows the Facebook button only when Supabase reports the provider enabled, and fails closed', async () => {
+    stubFetch({ external: { facebook: true } });
+    expect(await facebookEnabled()).toBe(true);
+    resetFacebookCache(); stubFetch({ external: { facebook: false } });
+    expect(await facebookEnabled()).toBe(false);
+    resetFacebookCache(); vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('network'); }));
+    expect(await facebookEnabled()).toBe(false);
+    env({}); resetFacebookCache();
+    expect(await facebookEnabled()).toBe(false);
   });
 });

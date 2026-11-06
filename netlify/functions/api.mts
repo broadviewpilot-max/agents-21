@@ -7,7 +7,7 @@ import { askJson, newMeter } from '../lib/claude.ts';
 import { activeModel, flashModels, geminiJson } from '../lib/gemini.ts';
 import { creditBalance } from '../lib/sources/scrapecreators.ts';
 import { delKey, getJson, listJson, putJson } from '../lib/store.ts';
-import { accessMode, allowedEmails, authenticate, googleClientId, issueSession, verifyGoogleCredential } from '../lib/auth.ts';
+import { accessMode, allowedEmails, authenticate, facebookEnabled, googleClientId, issueSession, supabaseConfig, verifyFacebookSession, verifyGoogleCredential } from '../lib/auth.ts';
 import { json, normalizeEin, normalizeUrl, uid } from '../lib/util.ts';
 
 export const config: Config = { path: '/api/*' };
@@ -60,7 +60,20 @@ export default async (req: Request) => {
   // Public endpoints: the login screen needs these before anyone is signed in.
   if (root === 'config' && method === 'GET') {
     const mode = accessMode();
-    return json({ mode, googleClientId: googleClientId() || undefined, googleReady: !mode.includes('google') || allowedEmails().length > 0 });
+    const sb = supabaseConfig();
+    const facebook = sb && (await facebookEnabled()) ? { url: sb.url } : undefined; // only the public project URL is sent to the browser
+    return json({ mode, googleClientId: googleClientId() || undefined, facebook, googleReady: !mode.includes('google') || allowedEmails().length > 0 });
+  }
+  if (root === 'auth' && id === 'facebook' && method === 'POST') {
+    try {
+      const { accessToken } = (await req.json()) as { accessToken?: string };
+      if (!accessToken) return json({ error: 'Missing Facebook sign-in token' }, 400);
+      const email = await verifyFacebookSession(accessToken);
+      const s = await issueSession(email);
+      return json({ token: s.token, email, expiresAt: s.expiresAt });
+    } catch (e) {
+      return json({ error: e instanceof Error ? e.message : 'Facebook sign-in failed' }, 401);
+    }
   }
   if (root === 'auth' && id === 'google' && method === 'POST') {
     if (!googleClientId()) return json({ error: 'Google sign-in is not configured on this site.' }, 400);

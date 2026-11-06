@@ -16,6 +16,7 @@ Agents: Funder Intelligence → (Awards & 990 ∥ Deadlines) → Fit Scoring →
    |---|---|---|
    | `GOOGLE_CLIENT_ID` | no (recommended) | Turns on **Sign in with Google**. A public ID, not a secret. See "Google sign-in setup" below. |
    | `ALLOWED_EMAILS` | with Google | Comma-separated emails allowed in. Required when `GOOGLE_CLIENT_ID` is set; if empty, nobody can sign in. |
+   | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | no | Turns on **Continue with Facebook** (brokered by Supabase Auth). Both are public values, not secrets. See "Facebook sign-in setup" below. Never use the service-role key. |
    | `APP_PASSWORD` | no | Optional backup login. With neither Google nor a password set, the site is in **open mode** (anyone with the URL can use it and spend your API credits). |
    | `MAX_RUNS_PER_DAY` | no | Default 25. Cost guard on research runs. |
    | `SCRAPECREATORS_API_KEY` | yes | Google search + LinkedIn signals. |
@@ -53,3 +54,15 @@ Storage is Netlify Blobs. Programs and scoring weights seed from `config/` and a
 6. Open the site: you will see a **Sign in with Google** button. Settings should show Access: `google`.
 
 How it works: the browser gets a signed Google ID token; the server verifies its signature, issuer, audience and expiry, requires a verified email on `ALLOWED_EMAILS`, then issues its own 12-hour session token signed with a random server-side secret. Removing an email from `ALLOWED_EMAILS` revokes that person's sessions. Keep `APP_PASSWORD` set as a backup until Google sign-in works, then remove it.
+
+
+## Facebook sign-in setup (one time)
+Facebook sign-in runs through Supabase Auth. The browser goes to Supabase, Facebook asks for consent, and Supabase returns a short-lived token. Our server then asks Supabase to validate that token and applies the **same `ALLOWED_EMAILS` allowlist** as Google. Only people on the allowlist get in; a Facebook account alone is not enough.
+
+1. **Meta app.** At developers.facebook.com create an app (use case: *Authenticate and request data from users with Facebook Login*). Add the **Facebook Login** product. Under Facebook Login > Settings, set **Valid OAuth Redirect URIs** to `https://<your-supabase-project>.supabase.co/auth/v1/callback`. Copy the **App ID** and **App Secret** (Settings > Basic). The default permissions `public_profile` and `email` need no app review. While the app is in *Development* mode only people with a role on the app can sign in; switch it to *Live* for anyone else.
+2. **Supabase.** Authentication > Providers > Facebook: enable it and paste the App ID and App Secret.
+3. **Supabase redirect list.** Authentication > URL Configuration > Redirect URLs: add `https://regal-mochi-8156ad.netlify.app/**` (your site address).
+4. **Netlify.** Add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (see `.env.example`) and make sure `ALLOWED_EMAILS` includes the email on the Facebook account. Redeploy.
+5. The login screen shows **Continue with Facebook** only when Supabase reports the provider enabled.
+
+Security notes: the email is read from the *Facebook identity* (not the Supabase account's primary email) and Supabase must have confirmed it, so a password sign-up in the same project cannot claim an allowed address. If Facebook shares no email the sign-in is refused with a clear message. To add another person, add their email to `ALLOWED_EMAILS`; removing it revokes their sessions immediately.
